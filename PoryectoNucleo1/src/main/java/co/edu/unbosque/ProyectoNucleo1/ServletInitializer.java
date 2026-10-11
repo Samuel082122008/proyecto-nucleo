@@ -1,4 +1,4 @@
-package co.edu.unbosque.PoryectoNucleo1;
+package co.edu.unbosque.ProyectoNucleo1;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -7,7 +7,7 @@ public class ServletInitializer extends SpringBootServletInitializer {
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(PoryectoNucleo1Application.class);
+		return application.sources(ProyectoNucleo1Application.class);
 	}
 
 }
