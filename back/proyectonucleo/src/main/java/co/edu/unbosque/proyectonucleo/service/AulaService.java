@@ -2,14 +2,12 @@ package co.edu.unbosque.proyectonucleo.service;
 
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.proyectonucleo.dto.AulaDTO;
 import co.edu.unbosque.proyectonucleo.entity.Aula;
-import co.edu.unbosque.proyectonucleo.exception.AulaNoEncontradaException;
 import co.edu.unbosque.proyectonucleo.repository.AulaRepository;
 
 @Service
@@ -19,37 +17,54 @@ public class AulaService {
 	@Autowired
 	private AulaRepository aulaRepo;
 
-	@Autowired
-	private ModelMapper modelMapper;
-
-	public AulaDTO crear(AulaDTO dto) {
-		Aula a = modelMapper.map(dto, Aula.class);
-		a.setId(0);
-		return modelMapper.map(aulaRepo.save(a), AulaDTO.class);
-	}
-
 	@Transactional(readOnly = true)
 	public List<AulaDTO> listar() {
-		return aulaRepo.findAll().stream().map(a -> modelMapper.map(a, AulaDTO.class)).toList();
+		return aulaRepo.findAll().stream().map(this::aDTO).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public AulaDTO buscar(Long id) {
-		return modelMapper.map(aulaRepo.findById(id).orElseThrow(AulaNoEncontradaException::new), AulaDTO.class);
+		Aula aula = aulaRepo.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Aula no encontrada con ID: " + id));
+		return aDTO(aula);
+	}
+
+	public AulaDTO crear(AulaDTO dto) {
+		Aula aula = new Aula();
+		aula.setNombre(dto.getNombre());
+		aula.setCapacidad(dto.getCapacidad());
+		aula.setTieneComputadores(dto.isTieneComputadores());
+		aula.setSillasMoviles(dto.isSillasMoviles());
+
+		return aDTO(aulaRepo.save(aula));
 	}
 
 	public AulaDTO actualizar(Long id, AulaDTO dto) {
-		Aula a = aulaRepo.findById(id).orElseThrow(AulaNoEncontradaException::new);
-		a.setNombre(dto.getNombre());
-		a.setCapacidad(dto.getCapacidad());
-		a.setTieneComputadores(dto.isTieneComputadores());
-		a.setSillasMoviles(dto.isSillasMoviles());
-		return modelMapper.map(a, AulaDTO.class);
+		Aula aula = aulaRepo.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Aula no encontrada con ID: " + id));
+
+		aula.setNombre(dto.getNombre());
+		aula.setCapacidad(dto.getCapacidad());
+		aula.setTieneComputadores(dto.isTieneComputadores());
+		aula.setSillasMoviles(dto.isSillasMoviles());
+
+		return aDTO(aula);
 	}
 
-	public int eliminar(Long id) {
-		if (!aulaRepo.existsById(id)) throw new AulaNoEncontradaException();
+	public void eliminar(Long id) {
+		if (!aulaRepo.existsById(id)) {
+			throw new IllegalArgumentException("Aula no encontrada con ID: " + id);
+		}
 		aulaRepo.deleteById(id);
-		return 0;
+	}
+
+	private AulaDTO aDTO(Aula aula) {
+		AulaDTO dto = new AulaDTO();
+		dto.setId(aula.getId());
+		dto.setNombre(aula.getNombre());
+		dto.setCapacidad(aula.getCapacidad());
+		dto.setTieneComputadores(aula.isTieneComputadores());
+		dto.setSillasMoviles(aula.isSillasMoviles());
+		return dto;
 	}
 }
