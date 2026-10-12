@@ -1,0 +1,14 @@
+spring.application.name=proyectonucleo
+server.port=8081
+
+spring.datasource.url=jdbc:mysql://HOST:PUERTO/defaultdb?sslMode=REQUIRED&serverTimezone=America/Bogota
+spring.datasource.username=USUARIO
+spring.datasource.password=CLAVE
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+app.frontend.allowed-origins=http://localhost:4200
+
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
