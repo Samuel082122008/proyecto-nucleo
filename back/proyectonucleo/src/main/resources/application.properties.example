@@ -12,3 +12,6 @@ app.frontend.allowed-origins=http://localhost:4200
 
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.api-docs.path=/v3/api-docs
+
+jwt.secret=CLAVE
+jwt.expiration-ms=86400000
