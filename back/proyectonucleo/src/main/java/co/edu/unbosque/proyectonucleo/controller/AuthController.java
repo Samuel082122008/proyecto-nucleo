@@ -24,11 +24,10 @@ public class AuthController {
 	/** Responde {"token": "...", "rol": "COORDINADOR"} o 401 si las credenciales fallan. */
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@Valid @RequestBody LoginDTO dto) {
-		try {
-			Map<String, String> respuesta = usuarioService.login(dto);
-			return ResponseEntity.ok(respuesta);
-		} catch (RuntimeException e) {
+		Map<String, String> respuesta = usuarioService.login(dto);
+		if (respuesta == null) {
 			return new ResponseEntity<>(Map.of("mensaje", "Credenciales incorrectas"), HttpStatus.UNAUTHORIZED);
 		}
+		return ResponseEntity.ok(respuesta);
 	}
 }
