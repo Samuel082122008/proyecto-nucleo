@@ -61,3 +61,4 @@ build/
 Thumbs.db
 *.log
 logs/
+back/proyectonucleo/bin/src/main/resources/application.properties
