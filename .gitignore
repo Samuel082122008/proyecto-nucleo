@@ -1,0 +1,63 @@
+### Backend (Spring Boot / Maven) ###
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### Secretos y configuracion local ###
+.env
+*.env
+application-local.properties
+application-secret.properties
+application-local.yml
+application.properties
+*.pem
+*.key
+
+### Frontend (Angular / Node) ###
+node_modules/
+dist/
+.angular/
+out-tsc/
+.sass-cache/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+
+### Eclipse / STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+.metadata/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Sistema operativo y logs ###
+.DS_Store
+Thumbs.db
+*.log
+logs/
