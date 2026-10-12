@@ -1,5 +1,6 @@
 package co.edu.unbosque.proyectonucleo.service;
 
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,23 @@ public class HorarioService {
 		return sesionRepo.findAll().stream().map(this::aDTO).toList();
 	}
 
+	@Transactional(readOnly = true)
+	public List<SesionDTO> listarPorDocente(Long docenteId) {
+		return sesionRepo.findByDocente_Id(docenteId).stream().map(this::aDTO).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public String exportarCsv() {
+		StringBuilder sb = new StringBuilder("dia,horaInicio,horaFin,curso,grupo,docente,aula\n");
+		sesionRepo.findAll().stream()
+				.sorted(Comparator.comparing(Sesion::getDiaSemana).thenComparing(Sesion::getHoraInicio))
+				.forEach(s -> sb.append(s.getDiaSemana()).append(",").append(s.getHoraInicio()).append(",")
+						.append(s.getHoraFin()).append(",").append(s.getGrupo().getCurso().getNombre()).append(",")
+						.append(s.getGrupo().getId()).append(",").append(s.getDocente().getNombre()).append(",")
+						.append(s.getAula().getNombre()).append("\n"));
+		return sb.toString();
+	}
+
 	public int eliminar(Long id) {
 		if (!sesionRepo.existsById(id)) throw new SesionNoEncontradaException();
 		sesionRepo.deleteById(id);
@@ -66,7 +84,6 @@ public class HorarioService {
 	}
 
 	private ResultadoSesion guardar(Sesion destino, SesionDTO dto) {
-		// Se valida sobre una copia: la sesión ya cargada NO se toca hasta que todo pase
 		Sesion candidata = construir(dto);
 		candidata.setId(destino.getId());
 

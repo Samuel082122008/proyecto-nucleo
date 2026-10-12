@@ -2,6 +2,7 @@ package co.edu.unbosque.proyectonucleo.repository;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,4 +40,6 @@ public interface SesionRepository extends JpaRepository<Sesion, Long> {
 		""")
 	boolean existeChoqueGrupo(@Param("grupoId") Long grupoId, @Param("dia") DiaSemana dia,
 			@Param("inicio") LocalTime inicio, @Param("fin") LocalTime fin, @Param("excluir") Long excluir);
+
+	Optional<Sesion> findByDocente_Id(Long docenteId);
 }
