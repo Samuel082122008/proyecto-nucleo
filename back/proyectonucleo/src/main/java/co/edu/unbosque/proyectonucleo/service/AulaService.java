@@ -1,6 +1,8 @@
 package co.edu.unbosque.proyectonucleo.service;
 
 import java.util.List;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,61 +17,39 @@ import co.edu.unbosque.proyectonucleo.repository.AulaRepository;
 public class AulaService {
 
 	@Autowired
-	private AulaRepository aulaRepository;
+	private AulaRepository aulaRepo;
+
+	@Autowired
+	private ModelMapper modelMapper;
+
+	public AulaDTO crear(AulaDTO dto) {
+		Aula a = modelMapper.map(dto, Aula.class);
+		a.setId(0);
+		return modelMapper.map(aulaRepo.save(a), AulaDTO.class);
+	}
 
 	@Transactional(readOnly = true)
 	public List<AulaDTO> listar() {
-		return aulaRepository.findAll()
-				.stream()
-				.map(this::convertirADTO)
-				.toList();
+		return aulaRepo.findAll().stream().map(a -> modelMapper.map(a, AulaDTO.class)).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public AulaDTO buscar(Long id) {
-		Aula aula = aulaRepository.findById(id)
-				.orElseThrow(AulaNoEncontradaException::new);
-		return convertirADTO(aula);
-	}
-
-	public AulaDTO crear(AulaDTO dto) {
-		Aula nuevaAula = mapiarEntidad(new Aula(), dto);
-		Aula guardada = aulaRepository.save(nuevaAula);
-		return convertirADTO(guardada);
+		return modelMapper.map(aulaRepo.findById(id).orElseThrow(AulaNoEncontradaException::new), AulaDTO.class);
 	}
 
 	public AulaDTO actualizar(Long id, AulaDTO dto) {
-		Aula aulaExistente = aulaRepository.findById(id)
-				.orElseThrow(AulaNoEncontradaException::new);
-		
-		mapiarEntidad(aulaExistente, dto);
-		Aula actualizada = aulaRepository.save(aulaExistente);
-		return convertirADTO(actualizada);
+		Aula a = aulaRepo.findById(id).orElseThrow(AulaNoEncontradaException::new);
+		a.setNombre(dto.getNombre());
+		a.setCapacidad(dto.getCapacidad());
+		a.setTieneComputadores(dto.isTieneComputadores());
+		a.setSillasMoviles(dto.isSillasMoviles());
+		return modelMapper.map(a, AulaDTO.class);
 	}
 
-	public void eliminar(Long id) {
-		if (!aulaRepository.existsById(id)) {
-			throw new AulaNoEncontradaException();
-		}
-		aulaRepository.deleteById(id);
-	}
-
-	// Métodos auxiliares de mapeo (Evitan problemas con tipos primitivos/Objetos)
-	private AulaDTO convertirADTO(Aula entidad) {
-		AulaDTO dto = new AulaDTO();
-		dto.setId(entidad.getId());
-		dto.setNombre(entidad.getNombre());
-		dto.setCapacidad(entidad.getCapacidad());
-		dto.setTieneComputadores(entidad.isTieneComputadores());
-		dto.setSillasMoviles(entidad.isSillasMoviles());
-		return dto;
-	}
-
-	private Aula mapiarEntidad(Aula entidad, AulaDTO dto) {
-		entidad.setNombre(dto.getNombre());
-		entidad.setCapacidad(dto.getCapacidad());
-		entidad.setTieneComputadores(dto.isTieneComputadores());
-		entidad.setSillasMoviles(dto.isSillasMoviles());
-		return entidad;
+	public int eliminar(Long id) {
+		if (!aulaRepo.existsById(id)) throw new AulaNoEncontradaException();
+		aulaRepo.deleteById(id);
+		return 0;
 	}
 }

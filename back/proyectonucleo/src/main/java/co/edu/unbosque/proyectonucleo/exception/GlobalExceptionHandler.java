@@ -26,7 +26,8 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler({ DocenteNoEncontradoException.class, AulaNoEncontradaException.class,
 			CursoNoEncontradoException.class, GrupoNoEncontradoException.class,
-			SesionNoEncontradaException.class, ParametroSemestreNoConfiguradoException.class })
+			SesionNoEncontradaException.class, ParametroSemestreNoConfiguradoException.class,
+			UsuarioNoEncontradoException.class })
 	public ResponseEntity<Map<String, Object>> handleNoEncontrado(RuntimeException ex) {
 		return responder(HttpStatus.NOT_FOUND, ex.getMessage(), null);
 	}
