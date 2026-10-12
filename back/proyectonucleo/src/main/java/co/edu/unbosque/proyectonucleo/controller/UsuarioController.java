@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
+import co.edu.unbosque.proyectonucleo.dto.UsuarioDTO;
+import co.edu.unbosque.proyectonucleo.service.UsuarioService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -22,24 +23,5 @@ public class UsuarioController {
 	@Autowired
 	private UsuarioService usuarioService;
 
-	@GetMapping
-	public ResponseEntity<?> listar() {
-		return ResponseEntity.ok(usuarioService.listar());
-	}
-
-	@PostMapping
-	public ResponseEntity<?> crear(@Valid @RequestBody UsuarioDTO dto) {
-		return new ResponseEntity<>(usuarioService.crear(dto), HttpStatus.CREATED);
-	}
-
-	@PutMapping("/{id}")
-	public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioDTO dto) {
-		return ResponseEntity.ok(usuarioService.actualizar(id, dto));
-	}
-
-	@DeleteMapping("/{id}")
-	public ResponseEntity<?> eliminar(@PathVariable Long id) {
-		usuarioService.eliminar(id);
-		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	}
+	
 }
