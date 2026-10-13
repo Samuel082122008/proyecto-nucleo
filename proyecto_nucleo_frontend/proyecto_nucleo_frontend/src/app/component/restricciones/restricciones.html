@@ -1,0 +1,61 @@
+<div class="page">
+  <h2>Restricciones horarias</h2>
+
+  @if (!esDocente) {
+    <div class="form">
+      <label>
+        Docente:
+        <select name="filtro" [(ngModel)]="filtroDocenteId" (ngModelChange)="cambiarFiltro()">
+          <option [ngValue]="0">-- Todos --</option>
+          @for (d of docentes; track d.id) {
+            <option [ngValue]="d.id">{{ d.nombre }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
+  <form class="form" (ngSubmit)="guardar()">
+    @if (!esDocente) {
+      <select name="docenteId" [(ngModel)]="form.docenteId">
+        <option [ngValue]="0">-- Docente --</option>
+        @for (d of docentes; track d.id) {
+          <option [ngValue]="d.id">{{ d.nombre }}</option>
+        }
+      </select>
+    }
+
+    <select name="dia" [(ngModel)]="form.diaSemana">
+      @for (d of dias; track d) {
+        <option [value]="d">{{ d }}</option>
+      }
+    </select>
+
+    <input name="horaInicio" type="time" [(ngModel)]="form.horaInicio" />
+    <input name="horaFin" type="time" [(ngModel)]="form.horaFin" />
+
+    <button type="submit">Agregar</button>
+  </form>
+
+  @if (error) { <p class="error">{{ error }}</p> }
+
+  <table>
+    <thead>
+    <tr><th>ID</th><th>Docente</th><th>Día</th><th>Inicio</th><th>Fin</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      @for (r of restricciones; track r.id) {
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ esDocente ? 'Yo' : nombreDocente(r.docenteId) }}</td>
+          <td>{{ r.diaSemana }}</td>
+          <td>{{ r.horaInicio }}</td>
+          <td>{{ r.horaFin }}</td>
+          <td><button class="peligro" (click)="eliminar(r)">Eliminar</button></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6">No hay restricciones registradas</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

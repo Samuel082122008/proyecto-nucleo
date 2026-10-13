@@ -1,0 +1,17 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 20px;
+  background: #1f4e9c;
+  color: #fff;
+}
+.brand { font-weight: bold; font-size: 18px; }
+.links { display: flex; gap: 14px; flex: 1; flex-wrap: wrap; }
+.links a { color: #dbe6f7; text-decoration: none; padding: 4px 8px; border-radius: 4px; }
+.links a.active, .links a:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.user { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.user button {
+  padding: 4px 10px; border: 1px solid #fff; background: transparent;
+  color: #fff; border-radius: 4px; cursor: pointer;
+}

@@ -1,0 +1,41 @@
+<div class="page">
+  <h2>Habilitaciones</h2>
+
+  <form class="form" (ngSubmit)="guardar()">
+    <select name="docenteId" [(ngModel)]="form.docenteId">
+      <option [ngValue]="0">-- Docente --</option>
+      @for (d of docentes; track d.id) {
+        <option [ngValue]="d.id">{{ d.nombre }}</option>
+      }
+    </select>
+
+    <select name="cursoId" [(ngModel)]="form.cursoId">
+      <option [ngValue]="0">-- Curso --</option>
+      @for (c of cursos; track c.id) {
+        <option [ngValue]="c.id">{{ c.nombre }}</option>
+      }
+    </select>
+
+    <button type="submit">Habilitar</button>
+  </form>
+
+  @if (error) { <p class="error">{{ error }}</p> }
+
+  <table>
+    <thead>
+    <tr><th>ID</th><th>Docente</th><th>Curso</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      @for (h of habilitaciones; track h.id) {
+        <tr>
+          <td>{{ h.id }}</td>
+          <td>{{ nombreDocente(h.docenteId) }}</td>
+          <td>{{ nombreCurso(h.cursoId) }}</td>
+          <td><button class="peligro" (click)="eliminar(h)">Eliminar</button></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="4">No hay habilitaciones registradas</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

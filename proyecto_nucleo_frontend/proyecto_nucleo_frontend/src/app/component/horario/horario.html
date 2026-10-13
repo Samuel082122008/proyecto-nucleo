@@ -1,0 +1,84 @@
+<div class="page">
+  <h2>Horario semanal</h2>
+
+  @if (puedeEditar) {
+    <form class="form" (ngSubmit)="guardar()">
+      <select name="grupoId" [(ngModel)]="form.grupoId">
+        <option [ngValue]="0">-- Grupo --</option>
+        @for (g of grupos; track g.id) {
+          <option [ngValue]="g.id">{{ nombreGrupo(g.id!) }}</option>
+        }
+      </select>
+
+      <select name="docenteId" [(ngModel)]="form.docenteId">
+        <option [ngValue]="0">-- Docente --</option>
+        @for (d of docentes; track d.id) {
+          <option [ngValue]="d.id">{{ d.nombre }}</option>
+        }
+      </select>
+
+      <select name="aulaId" [(ngModel)]="form.aulaId">
+        <option [ngValue]="0">-- Aula --</option>
+        @for (a of aulas; track a.id) {
+          <option [ngValue]="a.id">{{ a.nombre }}</option>
+        }
+      </select>
+
+      <select name="dia" [(ngModel)]="form.diaSemana">
+        @for (d of dias; track d) {
+          <option [value]="d">{{ d }}</option>
+        }
+      </select>
+
+      <input name="horaInicio" type="time" [(ngModel)]="form.horaInicio" />
+      <input name="horaFin" type="time" [(ngModel)]="form.horaFin" />
+
+      <button type="button" class="secundario" (click)="validar()">Validar</button>
+      <button type="submit">{{ editandoId != null ? 'Mover / actualizar' : 'Asignar' }}</button>
+      @if (editandoId != null) {
+        <button type="button" class="secundario" (click)="cancelar()">Cancelar</button>
+      }
+    </form>
+  }
+
+  @if (mensaje) { <p class="ok">{{ mensaje }}</p> }
+  @if (error) { <p class="error">{{ error }}</p> }
+
+  <div class="grilla-wrap">
+    <table class="grilla">
+      <thead>
+      <tr>
+        <th>Hora</th>
+        @for (d of dias; track d) { <th>{{ d }}</th> }
+      </tr>
+      </thead>
+      <tbody>
+        @for (h of horas; track h) {
+          <tr [class.almuerzo]="esAlmuerzo(h)">
+            <th>{{ h }}</th>
+            @for (d of dias; track d) {
+              <td>
+                @for (s of sesionesEn(d, h); track s.id) {
+                  <div class="sesion" [class.editable]="puedeEditar" (click)="editar(s)">
+                    <strong>{{ nombreGrupo(s.grupoId) }}</strong>
+                    <span>{{ nombreDocente(s.docenteId) }}</span>
+                    <span>{{ nombreAula(s.aulaId) }}</span>
+                    <small>{{ hhmm(s.horaInicio) }} - {{ hhmm(s.horaFin) }}</small>
+                    @if (puedeEditar) {
+                      <button type="button" class="peligro mini"
+                              (click)="eliminar(s); $event.stopPropagation()">x</button>
+                    }
+                  </div>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (puedeEditar) {
+    <p class="ayuda">Haz clic en una sesión para moverla o editarla.</p>
+  }
+</div>

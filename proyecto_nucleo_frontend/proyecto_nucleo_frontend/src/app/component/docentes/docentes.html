@@ -1,0 +1,44 @@
+<div class="page">
+  <h2>Docentes</h2>
+
+  <form class="form" (ngSubmit)="guardar()">
+    <input name="nombre" placeholder="Nombre" [(ngModel)]="form.nombre" />
+
+    <select name="tipoVinculacion" [(ngModel)]="form.tipoVinculacion">
+      @for (v of vinculaciones; track v) {
+        <option [value]="v">{{ v }}</option>
+      }
+    </select>
+
+    <input name="escalafon" placeholder="Escalafón" [(ngModel)]="form.escalafon" />
+
+    <button type="submit">{{ editando ? 'Actualizar' : 'Crear' }}</button>
+    @if (editando) {
+      <button type="button" class="secundario" (click)="cancelar()">Cancelar</button>
+    }
+  </form>
+
+  @if (error) { <p class="error">{{ error }}</p> }
+
+  <table>
+    <thead>
+    <tr><th>ID</th><th>Nombre</th><th>Vinculación</th><th>Escalafón</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      @for (d of docentes; track d.id) {
+        <tr>
+          <td>{{ d.id }}</td>
+          <td>{{ d.nombre }}</td>
+          <td>{{ d.tipoVinculacion }}</td>
+          <td>{{ d.escalafon }}</td>
+          <td>
+            <button (click)="editar(d)">Editar</button>
+            <button class="peligro" (click)="eliminar(d)">Eliminar</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5">No hay docentes registrados</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

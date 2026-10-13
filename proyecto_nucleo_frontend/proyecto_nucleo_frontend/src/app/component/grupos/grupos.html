@@ -1,0 +1,42 @@
+<div class="page">
+  <h2>Grupos</h2>
+
+  <form class="form" (ngSubmit)="guardar()">
+    <select name="cursoId" [(ngModel)]="form.cursoId">
+      <option [ngValue]="0">-- Curso --</option>
+      @for (c of cursos; track c.id) {
+        <option [ngValue]="c.id">{{ c.nombre }}</option>
+      }
+    </select>
+
+    <input name="estudiantes" type="number" min="0" placeholder="Estudiantes proyectados"
+           [(ngModel)]="form.estudiantesProyectados" />
+
+    <button type="submit">Crear</button>
+  </form>
+
+  @if (error) { <p class="error">{{ error }}</p> }
+
+  <table>
+    <thead>
+    <tr><th>ID</th><th>Curso</th><th>Estudiantes</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      @for (g of grupos; track g.id) {
+        <tr>
+          <td>{{ g.id }}</td>
+          <td>{{ nombreCurso(g.cursoId) }}</td>
+          <td>{{ g.estudiantesProyectados }}</td>
+          <td>{{ g.estado }}</td>
+          <td>
+            @if (g.estado !== 'CERRADO') {
+              <button class="peligro" (click)="cerrar(g)">Cerrar</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5">No hay grupos registrados</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

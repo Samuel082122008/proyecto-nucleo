@@ -1,0 +1,51 @@
+<div class="page">
+  <h2>Cursos</h2>
+
+  <form class="form" (ngSubmit)="guardar()">
+    <input name="nombre" placeholder="Nombre" [(ngModel)]="form.nombre" />
+    <input name="sesiones" type="number" min="1" placeholder="Sesiones/semana"
+           [(ngModel)]="form.sesionesPorSemana" />
+
+    <label>
+      <input name="computadores" type="checkbox" [(ngModel)]="form.requiereComputadores" />
+      Requiere computadores
+    </label>
+    <label>
+      <input name="sillas" type="checkbox" [(ngModel)]="form.requiereSillasMoviles" />
+      Requiere sillas móviles
+    </label>
+
+    <button type="submit">{{ editando ? 'Actualizar' : 'Crear' }}</button>
+    @if (editando) {
+      <button type="button" class="secundario" (click)="cancelar()">Cancelar</button>
+    }
+  </form>
+
+  @if (error) { <p class="error">{{ error }}</p> }
+
+  <table>
+    <thead>
+    <tr>
+      <th>ID</th><th>Nombre</th><th>Sesiones/sem</th>
+      <th>Computadores</th><th>Sillas móviles</th><th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+      @for (c of cursos; track c.id) {
+        <tr>
+          <td>{{ c.id }}</td>
+          <td>{{ c.nombre }}</td>
+          <td>{{ c.sesionesPorSemana }}</td>
+          <td>{{ c.requiereComputadores ? 'Sí' : 'No' }}</td>
+          <td>{{ c.requiereSillasMoviles ? 'Sí' : 'No' }}</td>
+          <td>
+            <button (click)="editar(c)">Editar</button>
+            <button class="peligro" (click)="eliminar(c)">Eliminar</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6">No hay cursos registrados</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

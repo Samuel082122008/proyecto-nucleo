@@ -1,0 +1,15 @@
+.page { padding: 20px; max-width: 1000px; margin: 0 auto; }
+.form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+.form input, .form select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+.form label { display: flex; align-items: center; gap: 4px; font-size: 14px; }
+button {
+  padding: 6px 12px; border: 0; border-radius: 4px;
+  background: #1f4e9c; color: #fff; cursor: pointer;
+}
+button.secundario { background: #7f8c8d; }
+button.peligro { background: #c0392b; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+th { background: #f1f3f6; }
+td button { margin-right: 4px; }
+.error { color: #c0392b; }

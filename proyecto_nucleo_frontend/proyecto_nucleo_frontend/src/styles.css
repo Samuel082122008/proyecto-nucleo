@@ -1,0 +1,143 @@
+:root {
+  --fondo-principal: rgb(244, 246, 249);
+  --texto-principal: rgb(15, 23, 42);
+  --azul-tv: rgb(30, 58, 138);
+  --azul-profundo: rgb(15, 23, 42);
+  --dorado-astro: rgb(212, 175, 55);
+  --cian-tv: rgb(14, 165, 233);
+  --borde: rgb(226, 232, 240);
+  --panel: rgb(255, 255, 255);
+  --muted: rgb(100, 116, 139);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    linear-gradient(145deg, rgba(30, 58, 138, 0.08), rgba(212, 175, 55, 0.06) 42%, rgba(14, 165, 233, 0.05)),
+    var(--fondo-principal);
+  color: var(--texto-principal);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  letter-spacing: 0;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(212, 175, 55, 0.55);
+  outline-offset: 2px;
+}
+
+button,
+.btn,
+a,
+.panel,
+.hero,
+.page-header,
+.news-card,
+.zodiac-card,
+.detail-panel,
+.auth-form {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+button:hover,
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+button:active,
+.btn:active {
+  transform: translateY(0);
+}
+
+input,
+select,
+textarea {
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgb(212, 175, 55);
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+}
+
+.hero,
+.page-header,
+.panel,
+.news-card,
+.zodiac-card,
+.detail-panel,
+.auth-form {
+  animation: aparecerSuave 280ms ease both;
+}
+
+.mensaje {
+  animation: avisoEntrada 220ms ease both;
+}
+
+@keyframes aparecerSuave {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes avisoEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.btn-primary {
+  --bs-btn-bg: rgb(30, 58, 138);
+  --bs-btn-border-color: rgb(30, 58, 138);
+  --bs-btn-hover-bg: rgb(23, 48, 118);
+  --bs-btn-hover-border-color: rgb(23, 48, 118);
+  --bs-btn-active-bg: rgb(15, 42, 100);
+  --bs-btn-active-border-color: rgb(15, 42, 100);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: rgb(30, 58, 138);
+  --bs-btn-border-color: rgb(30, 58, 138);
+  --bs-btn-hover-bg: rgb(30, 58, 138);
+  --bs-btn-hover-border-color: rgb(30, 58, 138);
+}
+
+.text-tv {
+  color: rgb(30, 58, 138);
+}
+
+.text-gold {
+  color: rgb(212, 175, 55);
+}
