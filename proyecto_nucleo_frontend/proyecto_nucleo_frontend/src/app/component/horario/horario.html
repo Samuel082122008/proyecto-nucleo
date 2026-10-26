@@ -57,9 +57,18 @@
           <tr [class.almuerzo]="esAlmuerzo(h)">
             <th>{{ h }}</th>
             @for (d of dias; track d) {
-              <td>
+              <td
+                [class.hover]="celdaHover === d + h"
+                (dragover)="sobreCelda($event, d, h)"
+                (dragleave)="celdaHover = ''"
+                (drop)="soltar($event, d, h)">
                 @for (s of sesionesEn(d, h); track s.id) {
-                  <div class="sesion" [class.editable]="puedeEditar" (click)="editar(s)">
+                  <div class="sesion" [class.editable]="puedeEditar"
+                       [class.arrastrando]="arrastrando?.id === s.id"
+                       [draggable]="puedeEditar"
+                       (dragstart)="iniciarArrastre($event, s)"
+                       (dragend)="finArrastre()"
+                       (click)="editar(s)">
                     <strong>{{ nombreGrupo(s.grupoId) }}</strong>
                     <span>{{ nombreDocente(s.docenteId) }}</span>
                     <span>{{ nombreAula(s.aulaId) }}</span>
@@ -79,6 +88,6 @@
   </div>
 
   @if (puedeEditar) {
-    <p class="ayuda">Haz clic en una sesión para moverla o editarla.</p>
+    <p class="ayuda">Arrastra una sesión a otra celda para moverla, o haz clic para editarla.</p>
   }
 </div>

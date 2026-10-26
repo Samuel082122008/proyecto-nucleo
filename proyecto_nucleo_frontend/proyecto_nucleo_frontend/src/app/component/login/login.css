@@ -1,25 +1,80 @@
-.login-container {
+.login {
+  position: relative;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f3f6;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--verde-oscuro);
 }
-.login-card {
-  width: 320px;
-  padding: 28px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+
+.fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.velo {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(700px 500px at 100% 0%, rgba(234, 138, 7, 0.45), transparent 70%),
+    linear-gradient(160deg, rgba(35, 42, 25, 0.82), rgba(56, 66, 42, 0.6));
+}
+:host-context(:root[data-theme='dark']) .velo {
+  background:
+    radial-gradient(700px 500px at 100% 0%, rgba(234, 138, 7, 0.28), transparent 70%),
+    linear-gradient(160deg, rgba(10, 13, 7, 0.9), rgba(25, 31, 17, 0.78));
+}
+
+.flotante { position: absolute; top: 20px; right: 20px; z-index: 2; }
+
+.tarjeta {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+  padding: 32px 32px 32px;
+  background: var(--vidrio-fuerte);
+  border: 1px solid var(--vidrio-borde);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), var(--brillo);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  backdrop-filter: blur(26px) saturate(180%);
+  animation: entrada 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-.login-card h2 { margin: 0 0 12px; text-align: center; }
-.login-card input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.login-card button {
-  margin-top: 12px; padding: 10px; border: 0; border-radius: 4px;
-  background: #1f4e9c; color: #fff; cursor: pointer;
+
+/* El logo es oscuro, así que va sobre una pastilla blanca en ambos temas */
+.logo-caja {
+  align-self: center;
+  padding: 10px 20px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }
-.login-card button:disabled { opacity: 0.6; cursor: default; }
-.error { color: #c0392b; margin: 4px 0 0; font-size: 14px; }
+.logo { display: block; width: 96px; }
+
+h1 {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--titulo);
+  letter-spacing: -0.02em;
+}
+.sub { margin: -6px 0 6px; text-align: center; font-size: 14px; color: var(--muted); }
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--titulo);
+}
+
+button[type='submit'] { margin-top: 6px; padding: 13px; font-size: 15px; }
+.error { align-self: center; margin: 0; }
+
+@keyframes entrada {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}

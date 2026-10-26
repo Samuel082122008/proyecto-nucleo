@@ -1,32 +1,85 @@
-.page { padding: 20px; max-width: 1000px; margin: 0 auto; }
-.form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
-.form input, .form select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.form label { display: flex; align-items: center; gap: 4px; font-size: 14px; }
-button {
-  padding: 6px 12px; border: 0; border-radius: 4px;
-  background: #1f4e9c; color: #fff; cursor: pointer;
-}
-button.secundario { background: #7f8c8d; }
-button.peligro { background: #c0392b; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
-th { background: #f1f3f6; }
-td button { margin-right: 4px; }
-.error { color: #c0392b; }
-
 .page { max-width: 1300px; }
-.ok { color: #1e8449; }
-.ayuda { font-size: 13px; color: #666; }
-.grilla-wrap { overflow-x: auto; }
-.grilla { table-layout: fixed; min-width: 900px; }
-.grilla th, .grilla td { border: 1px solid #ddd; vertical-align: top; }
-.grilla tbody th { width: 70px; background: #f1f3f6; }
-.grilla tr.almuerzo td, .grilla tr.almuerzo th { background: #fff4d6; }
-.sesion {
-  position: relative; display: flex; flex-direction: column; gap: 2px;
-  background: #dbe6f7; border-left: 4px solid #1f4e9c;
-  border-radius: 4px; padding: 4px 22px 4px 6px; margin-bottom: 4px; font-size: 12px;
+
+.grilla-wrap {
+  overflow-x: auto;
+  background: var(--vidrio);
+  border: 1px solid var(--vidrio-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra), var(--brillo);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
 }
-.sesion.editable { cursor: pointer; }
-.sesion.editable:hover { background: #c6d8f2; }
-button.mini { position: absolute; top: 2px; right: 2px; padding: 0 6px; font-size: 12px; }
+
+.grilla {
+  display: table;
+  table-layout: fixed;
+  min-width: 900px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.grilla th, .grilla td {
+  border-right: 1px solid var(--linea);
+  border-bottom: 1px solid var(--linea);
+  vertical-align: top;
+}
+.grilla thead th { text-align: center; }
+.grilla tbody th {
+  width: 76px;
+  font-size: 13px;
+  color: var(--titulo);
+  background: var(--campo);
+}
+.grilla td { height: 64px; padding: 6px; }
+.grilla tbody tr:hover td { background: transparent; }
+.grilla tr.almuerzo td, .grilla tr.almuerzo th { background: rgba(234, 138, 7, 0.16); }
+
+.grilla td.hover {
+  background: rgba(234, 138, 7, 0.22) !important;
+  outline: 2px dashed var(--naranja);
+  outline-offset: -3px;
+}
+
+.sesion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+  padding: 6px 26px 6px 10px;
+  font-size: 12px;
+  background: linear-gradient(135deg, var(--sesion-1), var(--sesion-2));
+  border: 1px solid var(--sesion-borde);
+  border-left: 4px solid var(--naranja);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16), var(--brillo);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.sesion strong { color: var(--titulo); }
+.sesion span { color: var(--texto); }
+.sesion small { color: var(--muted); }
+
+.sesion.editable { cursor: grab; user-select: none; }
+.sesion.editable:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24); }
+.sesion.editable:active { cursor: grabbing; }
+.sesion.arrastrando { opacity: 0.4; }
+
+button.mini {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 50%;
+}
