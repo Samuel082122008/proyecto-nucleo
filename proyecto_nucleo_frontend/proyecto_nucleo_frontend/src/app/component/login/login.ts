@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { ThemeService } from '../../services/theme';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +15,7 @@ export class Login {
   error = '';
   cargando = false;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router, public tema: ThemeService) {}
 
   ingresar(): void {
     if (!this.username || !this.password) {
@@ -29,9 +30,11 @@ export class Login {
         this.cargando = false;
         this.router.navigate(['/horario']);
       },
-      error: () => {
+      error: (err) => {
         this.cargando = false;
-        this.error = 'Usuario o contraseña incorrectos';
+        this.error = err?.status === 401 || err?.status === 403
+          ? 'Usuario o contraseña incorrectos'
+          : 'Error del servidor, intenta de nuevo';
       },
     });
   }

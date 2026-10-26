@@ -38,6 +38,9 @@ export class Horario implements OnInit {
   mensaje = '';
   error = '';
 
+  arrastrando: Sesion | null = null;
+  celdaHover = '';
+
   constructor(
     private service: SesionService,
     private grupoService: GrupoService,
@@ -199,5 +202,69 @@ export class Horario implements OnInit {
   cancelar(): void {
     this.form = this.vacio();
     this.editandoId = null;
+  }
+
+  private aMin(h: string): number {
+    const [hh, mm] = this.hhmm(h).split(':').map(Number);
+    return hh * 60 + (mm || 0);
+  }
+
+  private aHora(min: number): string {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  iniciarArrastre(ev: DragEvent, s: Sesion): void {
+    if (!this.puedeEditar) return;
+    this.arrastrando = s;
+    ev.dataTransfer!.effectAllowed = 'move';
+    ev.dataTransfer!.setData('text/plain', String(s.id));
+  }
+
+  finArrastre(): void {
+    this.arrastrando = null;
+    this.celdaHover = '';
+  }
+
+  sobreCelda(ev: DragEvent, dia: string, hora: string): void {
+    if (!this.arrastrando) return;
+    ev.preventDefault(); // necesario para permitir el drop
+    ev.dataTransfer!.dropEffect = 'move';
+    this.celdaHover = dia + hora;
+  }
+
+  soltar(ev: DragEvent, dia: string, hora: string): void {
+    ev.preventDefault();
+    const s = this.arrastrando;
+    this.finArrastre();
+    if (!s || s.id == null) return;
+
+    if (s.diaSemana === dia && this.hhmm(s.horaInicio) === hora) return;
+
+    const duracion = this.aMin(s.horaFin) - this.aMin(s.horaInicio);
+    const fin = this.aMin(hora) + duracion;
+    if (fin > 24 * 60) {
+      this.mensaje = '';
+      this.error = 'La sesión no cabe en esa franja';
+      return;
+    }
+
+    const nueva: Sesion = {
+      ...s,
+      diaSemana: dia as Sesion['diaSemana'],
+      horaInicio: hora,
+      horaFin: this.aHora(fin),
+    };
+
+    this.mensaje = '';
+    this.error = '';
+    this.service.mover(s.id, nueva).subscribe({
+      next: () => {
+        this.mensaje = 'Sesión movida correctamente';
+        this.cargar();
+      },
+      error: err => (this.error = this.textoError(err, 'No se pudo mover la sesión')),
+    });
   }
 }

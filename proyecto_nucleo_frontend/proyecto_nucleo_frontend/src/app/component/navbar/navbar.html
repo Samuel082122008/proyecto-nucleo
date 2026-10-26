@@ -1,27 +1,40 @@
-<nav class="navbar">
-  <span class="brand">Horarios</span>
+<header class="barra">
+  <nav class="navbar">
+    <a class="brand" routerLink="/horario">
+      <span class="punto"></span>Horarios
+    </a>
 
-  <div class="links">
-    <a routerLink="/horario" routerLinkActive="active">Horario</a>
+    <div class="links">
+      <a routerLink="/horario" routerLinkActive="active">Horario</a>
 
-    @if (auth.hasRole('DIRECTOR', 'COORDINADOR')) {
-      <a routerLink="/docentes" routerLinkActive="active">Docentes</a>
-      <a routerLink="/cursos" routerLinkActive="active">Cursos</a>
-      <a routerLink="/aulas" routerLinkActive="active">Aulas</a>
-      <a routerLink="/grupos" routerLinkActive="active">Grupos</a>
-      <a routerLink="/habilitaciones" routerLinkActive="active">Habilitaciones</a>
-      <a routerLink="/parametros" routerLinkActive="active">Parámetros</a>
-    }
+      @if (auth.hasRole('DIRECTOR', 'COORDINADOR')) {
+        <a routerLink="/docentes" routerLinkActive="active">Docentes</a>
+        <a routerLink="/cursos" routerLinkActive="active">Cursos</a>
+        <a routerLink="/aulas" routerLinkActive="active">Aulas</a>
+        <a routerLink="/grupos" routerLinkActive="active">Grupos</a>
+        <a routerLink="/habilitaciones" routerLinkActive="active">Habilitaciones</a>
+        <a routerLink="/parametros" routerLinkActive="active">Parámetros</a>
+      }
 
-    <a routerLink="/restricciones" routerLinkActive="active">Restricciones</a>
+      <a routerLink="/restricciones" routerLinkActive="active">Restricciones</a>
 
-    @if (auth.hasRole('DIRECTOR')) {
-      <a routerLink="/usuarios" routerLinkActive="active">Usuarios</a>
-    }
-  </div>
+      @if (auth.hasRole('DIRECTOR')) {
+        <a routerLink="/usuarios" routerLinkActive="active">Usuarios</a>
+      }
+    </div>
 
-  <div class="user">
-    <span>{{ auth.getUsername() }} ({{ auth.getRol() }})</span>
-    <button (click)="salir()">Salir</button>
-  </div>
-</nav>
+    <div class="user">
+      <span class="chip">{{ auth.getUsername() }} <small>{{ auth.getRol() }}</small></span>
+
+      <button type="button" class="btn-tema" (click)="tema.alternar()"
+              [attr.aria-label]="tema.esOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+              [title]="tema.esOscuro ? 'Modo claro' : 'Modo oscuro'">
+        <i class="fa-solid" [class.fa-moon]="!tema.esOscuro" [class.fa-sun]="tema.esOscuro"></i>
+      </button>
+
+      <button type="button" class="salir" (click)="salir()">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
+      </button>
+    </div>
+  </nav>
+</header>
