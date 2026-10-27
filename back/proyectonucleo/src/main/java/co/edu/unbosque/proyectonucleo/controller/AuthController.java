@@ -1,9 +1,6 @@
 package co.edu.unbosque.proyectonucleo.controller;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,10 +21,6 @@ public class AuthController {
 	/** Responde {"token": "...", "rol": "COORDINADOR"} o 401 si las credenciales fallan. */
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@Valid @RequestBody LoginDTO dto) {
-		Map<String, String> respuesta = usuarioService.login(dto);
-		if (respuesta == null) {
-			return new ResponseEntity<>(Map.of("mensaje", "Credenciales incorrectas"), HttpStatus.UNAUTHORIZED);
-		}
-		return ResponseEntity.ok(respuesta);
+		return ResponseEntity.ok(usuarioService.login(dto));
 	}
 }

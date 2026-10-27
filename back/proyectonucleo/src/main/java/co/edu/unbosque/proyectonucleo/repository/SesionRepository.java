@@ -16,6 +16,10 @@ public interface SesionRepository extends JpaRepository<Sesion, Long> {
 
 	long countByGrupo_IdAndIdNot(Long grupoId, Long id);
 
+	boolean existsByAula_Id(Long aulaId);
+
+	boolean existsByDocente_Id(Long docenteId);
+
 	@Query("""
 		select count(s) > 0 from Sesion s
 		where s.docente.id = :docenteId and s.diaSemana = :dia

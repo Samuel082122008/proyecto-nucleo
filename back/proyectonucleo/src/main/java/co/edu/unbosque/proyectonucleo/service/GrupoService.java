@@ -11,7 +11,10 @@ import co.edu.unbosque.proyectonucleo.entity.Curso;
 import co.edu.unbosque.proyectonucleo.entity.EstadoGrupo;
 import co.edu.unbosque.proyectonucleo.entity.Grupo;
 import co.edu.unbosque.proyectonucleo.exception.CursoNoEncontradoException;
+import co.edu.unbosque.proyectonucleo.exception.DatosObligatoriosException;
+import co.edu.unbosque.proyectonucleo.exception.EstudiantesProyectadosInvalidosException;
 import co.edu.unbosque.proyectonucleo.exception.GrupoNoEncontradoException;
+import co.edu.unbosque.proyectonucleo.exception.IdInvalidoException;
 import co.edu.unbosque.proyectonucleo.exception.ReglaNegocioException;
 import co.edu.unbosque.proyectonucleo.repository.CursoRepository;
 import co.edu.unbosque.proyectonucleo.repository.GrupoRepository;
@@ -30,6 +33,10 @@ public class GrupoService {
 	private ValidacionService validacionService;
 
 	public GrupoDTO crear(GrupoDTO dto) {
+		if (dto == null) throw new DatosObligatoriosException();
+		validarId(dto.getCursoId());
+		if (dto.getEstudiantesProyectados() < 0) throw new EstudiantesProyectadosInvalidosException();
+
 		Curso curso = cursoRepo.findById(dto.getCursoId()).orElseThrow(CursoNoEncontradoException::new);
 
 		ResultadoValidacion r = validacionService.validarCupo(dto.getEstudiantesProyectados());
@@ -43,6 +50,7 @@ public class GrupoService {
 	}
 
 	public GrupoDTO cerrar(Long id) {
+		validarId(id);
 		Grupo g = grupoRepo.findById(id).orElseThrow(GrupoNoEncontradoException::new);
 		g.setEstado(EstadoGrupo.CERRADO);
 		return aDTO(g);
@@ -51,6 +59,10 @@ public class GrupoService {
 	@Transactional(readOnly = true)
 	public List<GrupoDTO> listar() {
 		return grupoRepo.findAll().stream().map(this::aDTO).toList();
+	}
+
+	private void validarId(Long id) {
+		if (id == null || id <= 0) throw new IdInvalidoException();
 	}
 
 	private GrupoDTO aDTO(Grupo g) {
