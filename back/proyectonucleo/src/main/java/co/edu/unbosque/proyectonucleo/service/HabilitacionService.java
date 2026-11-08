@@ -11,8 +11,11 @@ import co.edu.unbosque.proyectonucleo.entity.Curso;
 import co.edu.unbosque.proyectonucleo.entity.Docente;
 import co.edu.unbosque.proyectonucleo.entity.Habilitacion;
 import co.edu.unbosque.proyectonucleo.exception.CursoNoEncontradoException;
+import co.edu.unbosque.proyectonucleo.exception.DatosObligatoriosException;
 import co.edu.unbosque.proyectonucleo.exception.DocenteNoEncontradoException;
-import co.edu.unbosque.proyectonucleo.exception.ReglaNegocioException;
+import co.edu.unbosque.proyectonucleo.exception.HabilitacionDuplicadaException;
+import co.edu.unbosque.proyectonucleo.exception.HabilitacionNoEncontradaException;
+import co.edu.unbosque.proyectonucleo.exception.IdInvalidoException;
 import co.edu.unbosque.proyectonucleo.repository.CursoRepository;
 import co.edu.unbosque.proyectonucleo.repository.DocenteRepository;
 import co.edu.unbosque.proyectonucleo.repository.HabilitacionRepository;
@@ -31,10 +34,14 @@ public class HabilitacionService {
 	private CursoRepository cursoRepo;
 
 	public HabilitacionDTO crear(HabilitacionDTO dto) {
+		if (dto == null) throw new DatosObligatoriosException();
+		validarId(dto.getDocenteId());
+		validarId(dto.getCursoId());
+
 		Docente d = docenteRepo.findById(dto.getDocenteId()).orElseThrow(DocenteNoEncontradoException::new);
 		Curso c = cursoRepo.findById(dto.getCursoId()).orElseThrow(CursoNoEncontradoException::new);
 		if (habilitacionRepo.existsByDocente_IdAndCurso_Id(d.getId(), c.getId())) {
-			throw new ReglaNegocioException(List.of("El docente ya esta habilitado para este curso."));
+			throw new HabilitacionDuplicadaException();
 		}
 		return aDTO(habilitacionRepo.save(new Habilitacion(d, c)));
 	}
@@ -45,9 +52,14 @@ public class HabilitacionService {
 	}
 
 	public int eliminar(Long id) {
-		if (!habilitacionRepo.existsById(id)) throw new IllegalArgumentException("Habilitacion no encontrada");
+		validarId(id);
+		if (!habilitacionRepo.existsById(id)) throw new HabilitacionNoEncontradaException();
 		habilitacionRepo.deleteById(id);
 		return 0;
+	}
+
+	private void validarId(Long id) {
+		if (id == null || id <= 0) throw new IdInvalidoException();
 	}
 
 	private HabilitacionDTO aDTO(Habilitacion h) {

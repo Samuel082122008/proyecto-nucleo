@@ -9,8 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.unbosque.proyectonucleo.dto.RestriccionHorariaDTO;
 import co.edu.unbosque.proyectonucleo.entity.Docente;
 import co.edu.unbosque.proyectonucleo.entity.RestriccionHoraria;
+import co.edu.unbosque.proyectonucleo.exception.DatosObligatoriosException;
 import co.edu.unbosque.proyectonucleo.exception.DocenteNoEncontradoException;
-import co.edu.unbosque.proyectonucleo.exception.ReglaNegocioException;
+import co.edu.unbosque.proyectonucleo.exception.IdInvalidoException;
+import co.edu.unbosque.proyectonucleo.exception.RangoHorarioInvalidoException;
+import co.edu.unbosque.proyectonucleo.exception.RestriccionNoEncontradaException;
 import co.edu.unbosque.proyectonucleo.repository.DocenteRepository;
 import co.edu.unbosque.proyectonucleo.repository.RestriccionHorariaRepository;
 
@@ -25,25 +28,35 @@ public class RestriccionHorariaService {
 	private DocenteRepository docenteRepo;
 
 	public RestriccionHorariaDTO crear(RestriccionHorariaDTO dto) {
+		if (dto == null) throw new DatosObligatoriosException();
+		validarId(dto.getDocenteId());
+		if (dto.getDiaSemana() == null) throw new DatosObligatoriosException("diaSemana");
+		if (dto.getHoraInicio() == null) throw new DatosObligatoriosException("horaInicio");
+		if (dto.getHoraFin() == null) throw new DatosObligatoriosException("horaFin");
+		if (!dto.getHoraInicio().isBefore(dto.getHoraFin())) throw new RangoHorarioInvalidoException();
+
 		Docente d = docenteRepo.findById(dto.getDocenteId()).orElseThrow(DocenteNoEncontradoException::new);
-		if (!dto.getHoraInicio().isBefore(dto.getHoraFin())) {
-			throw new ReglaNegocioException(List.of("La hora de inicio debe ser anterior a la hora de fin."));
-		}
 		return aDTO(restriccionRepo
 				.save(new RestriccionHoraria(d, dto.getDiaSemana(), dto.getHoraInicio(), dto.getHoraFin())));
 	}
 
 	@Transactional(readOnly = true)
 	public List<RestriccionHorariaDTO> listar(Long docenteId) {
+		if (docenteId != null) validarId(docenteId);
 		List<RestriccionHoraria> lista = docenteId == null ? restriccionRepo.findAll()
 				: restriccionRepo.findByDocente_Id(docenteId);
 		return lista.stream().map(this::aDTO).toList();
 	}
 
 	public int eliminar(Long id) {
-		if (!restriccionRepo.existsById(id)) throw new IllegalArgumentException("Restriccion no encontrada");
+		validarId(id);
+		if (!restriccionRepo.existsById(id)) throw new RestriccionNoEncontradaException();
 		restriccionRepo.deleteById(id);
 		return 0;
+	}
+
+	private void validarId(Long id) {
+		if (id == null || id <= 0) throw new IdInvalidoException();
 	}
 
 	private RestriccionHorariaDTO aDTO(RestriccionHoraria r) {

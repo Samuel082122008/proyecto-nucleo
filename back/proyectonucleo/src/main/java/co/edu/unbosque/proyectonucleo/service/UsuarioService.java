@@ -1,9 +1,10 @@
 package co.edu.unbosque.proyectonucleo.service;
 
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,8 +15,15 @@ import co.edu.unbosque.proyectonucleo.dto.LoginDTO;
 import co.edu.unbosque.proyectonucleo.dto.UsuarioDTO;
 import co.edu.unbosque.proyectonucleo.entity.RolUsuario;
 import co.edu.unbosque.proyectonucleo.entity.Usuario;
+import co.edu.unbosque.proyectonucleo.exception.ContrasenaInvalidaException;
+import co.edu.unbosque.proyectonucleo.exception.CredencialesInvalidasException;
+import co.edu.unbosque.proyectonucleo.exception.DatosObligatoriosException;
 import co.edu.unbosque.proyectonucleo.exception.DocenteNoEncontradoException;
-import co.edu.unbosque.proyectonucleo.exception.ReglaNegocioException;
+import co.edu.unbosque.proyectonucleo.exception.DocenteRequeridoException;
+import co.edu.unbosque.proyectonucleo.exception.IdInvalidoException;
+import co.edu.unbosque.proyectonucleo.exception.UltimoDirectorException;
+import co.edu.unbosque.proyectonucleo.exception.UsuarioDuplicadoException;
+import co.edu.unbosque.proyectonucleo.exception.UsuarioInvalidoException;
 import co.edu.unbosque.proyectonucleo.exception.UsuarioNoEncontradoException;
 import co.edu.unbosque.proyectonucleo.repository.DocenteRepository;
 import co.edu.unbosque.proyectonucleo.repository.UsuarioRepository;
@@ -24,6 +32,8 @@ import co.edu.unbosque.proyectonucleo.security.JwtUtil;
 @Service
 @Transactional
 public class UsuarioService {
+
+	private static final Pattern PATRON_USERNAME = Pattern.compile("^[A-Za-z0-9._@-]{4,50}$");
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -43,15 +53,9 @@ public class UsuarioService {
 	}
 
 	public UsuarioDTO crear(UsuarioDTO dto) {
-		List<String> errores = new ArrayList<>();
-		if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-			errores.add("La contraseña es obligatoria.");
-		}
-		if (usuarioRepo.existsByUsername(dto.getUsername())) {
-			errores.add("Ya existe un usuario con ese nombre.");
-		}
-		validarDocente(dto, errores);
-		if (!errores.isEmpty()) throw new ReglaNegocioException(errores);
+		validar(dto, true);
+		if (usuarioRepo.existsByUsername(dto.getUsername())) throw new UsuarioDuplicadoException();
+		validarDocenteExiste(dto);
 
 		Usuario u = new Usuario();
 		u.setUsername(dto.getUsername());
@@ -62,14 +66,18 @@ public class UsuarioService {
 	}
 
 	public UsuarioDTO actualizar(Long id, UsuarioDTO dto) {
+		validarId(id);
+		validar(dto, false);
 		Usuario u = usuarioRepo.findById(id).orElseThrow(UsuarioNoEncontradoException::new);
 
-		List<String> errores = new ArrayList<>();
 		if (!u.getUsername().equals(dto.getUsername()) && usuarioRepo.existsByUsername(dto.getUsername())) {
-			errores.add("Ya existe un usuario con ese nombre.");
+			throw new UsuarioDuplicadoException();
 		}
-		validarDocente(dto, errores);
-		if (!errores.isEmpty()) throw new ReglaNegocioException(errores);
+		validarDocenteExiste(dto);
+		if (u.getRol() == RolUsuario.DIRECTOR && dto.getRol() != RolUsuario.DIRECTOR
+				&& usuarioRepo.countByRol(RolUsuario.DIRECTOR) <= 1) {
+			throw new UltimoDirectorException();
+		}
 
 		u.setUsername(dto.getUsername());
 		u.setRol(dto.getRol());
@@ -81,29 +89,54 @@ public class UsuarioService {
 	}
 
 	public int eliminar(Long id) {
-		if (!usuarioRepo.existsById(id)) throw new UsuarioNoEncontradoException();
+		validarId(id);
+		Usuario u = usuarioRepo.findById(id).orElseThrow(UsuarioNoEncontradoException::new);
+		if (u.getRol() == RolUsuario.DIRECTOR && usuarioRepo.countByRol(RolUsuario.DIRECTOR) <= 1) {
+			throw new UltimoDirectorException();
+		}
 		usuarioRepo.deleteById(id);
 		return 0;
 	}
 
-	/** Devuelve {"token", "rol"} o null si las credenciales no son correctas. */
+	/** Devuelve {"token", "rol"} o lanza CredencialesInvalidasException (401). */
 	@Transactional(readOnly = true)
 	public Map<String, String> login(LoginDTO dto) {
-		Optional<Usuario> usuario = usuarioRepo.findByUsername(dto.getUsername());
-		if (usuario.isEmpty() || !passwordEncoder.matches(dto.getPassword(), usuario.get().getPassword())) {
-			return null;
+		if (dto == null) throw new DatosObligatoriosException();
+		Optional<Usuario> usuario = dto.getUsername() == null ? Optional.empty()
+				: usuarioRepo.findByUsername(dto.getUsername());
+		if (usuario.isEmpty() || dto.getPassword() == null
+				|| !passwordEncoder.matches(dto.getPassword(), usuario.get().getPassword())) {
+			throw new CredencialesInvalidasException();
 		}
 		String rol = usuario.get().getRol().name();
 		return Map.of("token", jwtUtil.generarToken(usuario.get().getUsername(), rol), "rol", rol);
 	}
 
-	private void validarDocente(UsuarioDTO dto, List<String> errores) {
+	private void validarId(Long id) {
+		if (id == null || id <= 0) throw new IdInvalidoException();
+	}
+
+	private void validar(UsuarioDTO dto, boolean passwordObligatoria) {
+		if (dto == null) throw new DatosObligatoriosException();
+		if (dto.getUsername() == null || !PATRON_USERNAME.matcher(dto.getUsername()).matches()) {
+			throw new UsuarioInvalidoException();
+		}
+		String p = dto.getPassword();
+		boolean hayPassword = p != null && !p.isBlank();
+		if ((passwordObligatoria || hayPassword)
+				&& (p == null || p.isBlank() || p.length() < 6 || p.getBytes(StandardCharsets.UTF_8).length > 72)) {
+			throw new ContrasenaInvalidaException();
+		}
+		if (dto.getRol() == null) throw new DatosObligatoriosException("rol");
 		if (dto.getRol() == RolUsuario.DOCENTE) {
-			if (dto.getDocenteId() == null) {
-				errores.add("Un usuario con rol DOCENTE debe estar asociado a un docente.");
-			} else if (!docenteRepo.existsById(dto.getDocenteId())) {
-				throw new DocenteNoEncontradoException();
-			}
+			if (dto.getDocenteId() == null) throw new DocenteRequeridoException();
+			validarId(dto.getDocenteId());
+		}
+	}
+
+	private void validarDocenteExiste(UsuarioDTO dto) {
+		if (dto.getRol() == RolUsuario.DOCENTE && !docenteRepo.existsById(dto.getDocenteId())) {
+			throw new DocenteNoEncontradoException();
 		}
 	}
 
