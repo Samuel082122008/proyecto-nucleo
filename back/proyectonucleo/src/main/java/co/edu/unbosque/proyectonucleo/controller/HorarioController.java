@@ -18,6 +18,8 @@ import co.edu.unbosque.proyectonucleo.dto.SesionDTO;
 import co.edu.unbosque.proyectonucleo.dto.SesionRespuestaDTO;
 import co.edu.unbosque.proyectonucleo.service.HorarioService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import co.edu.unbosque.proyectonucleo.security.UsuarioAutenticado;
 
 @RestController
 @RequestMapping("/sesiones")
@@ -27,10 +29,12 @@ public class HorarioController {
 	private HorarioService horarioService;
 
 	@GetMapping
-	public ResponseEntity<?> listar() {
+	public ResponseEntity<?> listar(@AuthenticationPrincipal UsuarioAutenticado u) {
+		if (u != null && "DOCENTE".equals(u.rol())) {
+			return ResponseEntity.ok(horarioService.listarDeDocente(u.docenteId()));
+		}
 		return ResponseEntity.ok(horarioService.listar());
 	}
-
 	@PostMapping
 	public ResponseEntity<?> asignar(@Valid @RequestBody SesionDTO dto) {
 		return responder(horarioService.asignar(dto), HttpStatus.CREATED);

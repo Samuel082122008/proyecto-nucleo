@@ -22,6 +22,9 @@ import co.edu.unbosque.proyectonucleo.repository.HabilitacionRepository;
 import co.edu.unbosque.proyectonucleo.repository.ParametroSemestreRepository;
 import co.edu.unbosque.proyectonucleo.repository.RestriccionHorariaRepository;
 import co.edu.unbosque.proyectonucleo.repository.SesionRepository;
+import co.edu.unbosque.proyectonucleo.entity.Docente;
+import co.edu.unbosque.proyectonucleo.entity.TipoVinculacion;
+
 
 @Service
 @Transactional
@@ -53,6 +56,7 @@ public class ValidacionService {
 		r.unir(validarAula(s));
 		r.unir(validarGrupo(s));
 		r.unir(validarDiasConsecutivos(s));
+		r.unir(validarCargaDocente(s));
 		return r;
 	}
 
@@ -191,6 +195,38 @@ public class ValidacionService {
 		int max = parametros().getSesionesMaxSemana();
 		if (sesiones < 1 || sesiones > max) {
 			r.error("Un curso debe tener entre 1 y " + max + " sesiones por semana.");
+		}
+		return r;
+	}
+	
+	
+	private static final int HORAS_TIEMPO_COMPLETO = 20;
+
+	private double factor(TipoVinculacion t) {
+		if (t == null) return 1.0;
+		return switch (t) {
+			case TIEMPO_COMPLETO -> 1.0;
+			case TRES_CUARTOS -> 0.75;
+			case MEDIO_TIEMPO -> 0.5;
+			case CUARTO_TIEMPO -> 0.25;
+		};
+	}
+
+	// Carga semanal maxima segun el tipo de vinculacion del docente
+	public ResultadoValidacion validarCargaDocente(Sesion s) {
+		ResultadoValidacion r = new ResultadoValidacion();
+		Docente d = s.getDocente();
+		double tope = HORAS_TIEMPO_COMPLETO * factor(d.getTipoVinculacion());
+
+		long minutos = sesionRepo.findByDocente_Id(d.getId()).stream()
+				.filter(o -> o.getId() != s.getId())
+				.mapToLong(o -> Duration.between(o.getHoraInicio(), o.getHoraFin()).toMinutes())
+				.sum();
+		minutos += Duration.between(s.getHoraInicio(), s.getHoraFin()).toMinutes();
+
+		if (minutos > tope * 60) {
+			r.error(String.format("El docente superaria su carga semanal: %.1f h de un maximo de %.1f h para su vinculacion.",
+					minutos / 60.0, tope));
 		}
 		return r;
 	}

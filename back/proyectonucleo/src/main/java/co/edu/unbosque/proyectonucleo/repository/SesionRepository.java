@@ -13,7 +13,8 @@ import co.edu.unbosque.proyectonucleo.entity.Sesion;
 public interface SesionRepository extends JpaRepository<Sesion, Long> {
 
 	List<Sesion> findByGrupo_Id(Long grupoId);
-
+	List<Sesion> findByDocente_Id(Long docenteId);
+	
 	long countByGrupo_IdAndIdNot(Long grupoId, Long id);
 
 	boolean existsByAula_Id(Long aulaId);

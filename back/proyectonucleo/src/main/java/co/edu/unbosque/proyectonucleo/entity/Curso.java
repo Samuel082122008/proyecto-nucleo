@@ -20,6 +20,7 @@ public class Curso {
 	private int sesionesPorSemana;
 	private boolean requiereComputadores;
 	private boolean requiereSillasMoviles;
+	private Integer semestre;
 
 	public Curso() {
 	}
@@ -31,7 +32,14 @@ public class Curso {
 		this.requiereComputadores = requiereComputadores;
 		this.requiereSillasMoviles = requiereSillasMoviles;
 	}
+	public Integer getSemestre() {
+		return semestre;
+	}
 
+	public void setSemestre(Integer semestre) {
+		this.semestre = semestre;
+	}
+	
 	public long getId() {
 		return id;
 	}

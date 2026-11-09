@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
 import co.edu.unbosque.proyectonucleo.dto.GrupoDTO;
 import co.edu.unbosque.proyectonucleo.service.GrupoService;
 import jakarta.validation.Valid;
@@ -35,5 +35,10 @@ public class GrupoController {
 	@PatchMapping("/{id}/cerrar")
 	public ResponseEntity<?> cerrar(@PathVariable Long id) {
 		return ResponseEntity.ok(grupoService.cerrar(id));
+	}
+	@DeleteMapping("/{id}")
+	public ResponseEntity<?> eliminar(@PathVariable Long id) {
+		grupoService.eliminar(id);
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 }

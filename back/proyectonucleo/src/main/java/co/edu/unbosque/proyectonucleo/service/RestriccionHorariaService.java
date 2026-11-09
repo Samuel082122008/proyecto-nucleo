@@ -68,4 +68,14 @@ public class RestriccionHorariaService {
 		dto.setHoraFin(r.getHoraFin());
 		return dto;
 	}
+	/** Elimina solo si la restriccion pertenece al docente; si no, responde como si no existiera. */
+	public int eliminarDeDocente(Long id, Long docenteId) {
+		validarId(id);
+		RestriccionHoraria r = restriccionRepo.findById(id).orElseThrow(RestriccionNoEncontradaException::new);
+		if (docenteId == null || r.getDocente().getId() != docenteId) {
+			throw new RestriccionNoEncontradaException();
+		}
+		restriccionRepo.delete(r);
+		return 0;
+	}
 }

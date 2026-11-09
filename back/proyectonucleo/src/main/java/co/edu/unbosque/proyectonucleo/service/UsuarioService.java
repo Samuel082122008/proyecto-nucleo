@@ -109,7 +109,7 @@ public class UsuarioService {
 			throw new CredencialesInvalidasException();
 		}
 		String rol = usuario.get().getRol().name();
-		return Map.of("token", jwtUtil.generarToken(usuario.get().getUsername(), rol), "rol", rol);
+		return Map.of("token", jwtUtil.generarToken(usuario.get().getUsername(), rol, usuario.get().getDocenteId()), "rol", rol);
 	}
 
 	private void validarId(Long id) {

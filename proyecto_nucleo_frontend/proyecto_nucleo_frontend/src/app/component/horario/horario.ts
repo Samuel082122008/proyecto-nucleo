@@ -13,6 +13,7 @@ import { Curso } from '../../models/curso';
 import { Docente } from '../../models/docente';
 import { Aula } from '../../models/aula';
 import { DIAS } from '../../models/enums';
+import { textoError } from '../../core/http-error';
 
 @Component({
   selector: 'app-horario',
@@ -26,20 +27,27 @@ export class Horario implements OnInit {
   cursos: Curso[] = [];
   docentes: Docente[] = [];
   aulas: Aula[] = [];
+  pendientes: { grupo: Grupo; faltan: number }[] = [];
 
   dias = DIAS;
   horas: string[] = [];
   almuerzoInicio = '';
   almuerzoFin = '';
+  duracionHoras = 2;
 
   puedeEditar = false;
   form: Sesion = this.vacio();
   editandoId: number | null = null;
+  aulaElegida = 0; // 0 = automática
   mensaje = '';
   error = '';
 
   arrastrando: Sesion | null = null;
+  arrastrandoGrupo: Grupo | null = null;
   celdaHover = '';
+
+  celdas = new Map<string, Sesion[]>();
+  private readonly VACIO: Sesion[] = [];
 
   constructor(
     private service: SesionService,
@@ -70,7 +78,10 @@ export class Horario implements OnInit {
         this.generarHoras(r.parametros.franjaInicio, r.parametros.franjaFin);
         this.almuerzoInicio = this.hhmm(r.parametros.almuerzoInicio);
         this.almuerzoFin = this.hhmm(r.parametros.almuerzoFin);
+        const d = (r.parametros as any).duracionSesionHoras;
+        if (d) this.duracionHoras = Number(d);
       }
+      this.calcularPendientes();
     });
 
     this.cargar();
@@ -92,6 +103,7 @@ export class Horario implements OnInit {
     for (let h = a; h < b; h++) {
       this.horas.push(`${String(h).padStart(2, '0')}:00`);
     }
+    this.reconstruir();
   }
 
   esAlmuerzo(hora: string): boolean {
@@ -109,14 +121,47 @@ export class Horario implements OnInit {
     return this.docentes.find(d => d.id === id)?.nombre ?? `Docente #${id}`;
   }
 
+  docenteDelGrupo(grupoId?: number): string {
+    const g = this.grupos.find(x => x.id === grupoId);
+    if (!g?.docenteId) return '—';
+    return this.nombreDocente(g.docenteId);
+  }
+
   nombreAula(id: number): string {
     return this.aulas.find(a => a.id === id)?.nombre ?? `Aula #${id}`;
   }
 
   sesionesEn(dia: string, hora: string): Sesion[] {
-    return this.sesiones.filter(
-      s => s.diaSemana === dia && this.hhmm(s.horaInicio) <= hora && hora < this.hhmm(s.horaFin),
-    );
+    return this.celdas.get(`${dia}|${hora}`) ?? this.VACIO;
+  }
+
+  private reconstruir(): void {
+    const mapa = new Map<string, Sesion[]>();
+    for (const s of this.sesiones) {
+      const ini = this.hhmm(s.horaInicio);
+      const fin = this.hhmm(s.horaFin);
+      for (const h of this.horas) {
+        if (ini <= h && h < fin) {
+          const k = `${s.diaSemana}|${h}`;
+          const lista = mapa.get(k);
+          if (lista) lista.push(s); else mapa.set(k, [s]);
+        }
+      }
+    }
+    this.celdas = mapa;
+    this.calcularPendientes();
+  }
+  private aplicar(res: any): void {
+    const nueva: Sesion | undefined = res?.sesion;
+    if (!nueva) {
+      this.cargar();
+      return;
+    }
+    const i = this.sesiones.findIndex(x => x.id === nueva.id);
+    this.sesiones = i >= 0
+      ? this.sesiones.map(x => (x.id === nueva.id ? nueva : x))
+      : [...this.sesiones, nueva];
+    this.reconstruir();
   }
 
   cargar(): void {
@@ -126,82 +171,38 @@ export class Horario implements OnInit {
         this.sesiones = !this.puedeEditar && miId != null
           ? data.filter(s => s.docenteId === miId)
           : data;
+        this.reconstruir();
       },
       error: () => (this.error = 'No se pudo cargar el horario'),
     });
   }
 
-  private datosValidos(): boolean {
-    this.mensaje = '';
-    this.error = '';
-    const f = this.form;
-    if (!f.grupoId || !f.docenteId || !f.aulaId) {
-      this.error = 'Selecciona grupo, docente y aula';
-      return false;
-    }
-    if (f.horaInicio >= f.horaFin) {
-      this.error = 'La hora de inicio debe ser menor que la de fin';
-      return false;
-    }
-    return true;
+  private calcularPendientes(): void {
+    this.pendientes = this.grupos
+      .filter(g => g.estado !== 'CERRADO')
+      .map(g => {
+        const total = this.cursos.find(c => c.id === g.cursoId)?.sesionesPorSemana ?? 1;
+        const hechas = this.sesiones.filter(s => s.grupoId === g.id).length;
+        return { grupo: g, faltan: total - hechas };
+      })
+      .filter(p => p.faltan > 0);
   }
 
-  private textoError(err: any, defecto: string): string {
-    const e = err?.error;
-    if (typeof e === 'string' && e) return e;
-    return e?.message ?? e?.mensaje ?? e?.error ?? defecto;
-  }
+  // ---------- helpers ----------
 
-  validar(): void {
-    if (!this.datosValidos()) return;
-    this.service.validar(this.form).subscribe({
-      next: res => {
-        const texto = typeof res === 'string' ? res : res?.mensaje ?? res?.message;
-        this.mensaje = texto || 'La sesión es válida';
-      },
-      error: err => (this.error = this.textoError(err, 'La sesión no es válida')),
-    });
-  }
-
-  guardar(): void {
-    if (!this.datosValidos()) return;
-
-    const peticion = this.editandoId != null
-      ? this.service.mover(this.editandoId, this.form)
-      : this.service.asignar(this.form);
-
-    peticion.subscribe({
-      next: () => {
-        this.cancelar();
-        this.mensaje = 'Guardado correctamente';
-        this.cargar();
-      },
-      error: err => (this.error = this.textoError(err, 'No se pudo guardar la sesión')),
-    });
-  }
-
-  editar(s: Sesion): void {
-    if (!this.puedeEditar) return;
-    this.form = { ...s, horaInicio: this.hhmm(s.horaInicio), horaFin: this.hhmm(s.horaFin) };
-    this.editandoId = s.id ?? null;
+  private limpiar(): void {
     this.mensaje = '';
     this.error = '';
   }
 
-  eliminar(s: Sesion): void {
-    if (s.id == null || !confirm('¿Eliminar esta sesión?')) return;
-    this.service.eliminar(s.id).subscribe({
-      next: () => {
-        this.cancelar();
-        this.cargar();
-      },
-      error: err => (this.error = this.textoError(err, 'No se pudo eliminar')),
-    });
+  private exito(res: any, base: string): string {
+    const av: string[] = res?.advertencias ?? [];
+    return av.length ? `${base}. Aviso: ${av.join(' · ')}` : base;
   }
 
-  cancelar(): void {
-    this.form = this.vacio();
-    this.editandoId = null;
+  private conDocente(s: Sesion): Sesion {
+    const g = this.grupos.find(x => x.id === s.grupoId);
+    return { ...s, docenteId: g?.docenteId ?? s.docenteId ?? 0 };
   }
 
   private aMin(h: string): number {
@@ -215,37 +216,132 @@ export class Horario implements OnInit {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
+  // ---------- formulario ----------
+
+  private datosValidos(): boolean {
+    this.limpiar();
+    const f = this.form;
+    if (!f.grupoId || !f.aulaId) {
+      this.error = 'Selecciona grupo y aula';
+      return false;
+    }
+    if (f.horaInicio >= f.horaFin) {
+      this.error = 'La hora de inicio debe ser menor que la de fin';
+      return false;
+    }
+    return true;
+  }
+
+  validar(): void {
+    if (!this.datosValidos()) return;
+    this.service.validar(this.conDocente(this.form)).subscribe({
+      next: res => {
+        if (res.valido) {
+          this.mensaje = res.advertencias?.length
+            ? 'Válida, con avisos: ' + res.advertencias.join(' · ')
+            : 'La sesión es válida';
+        } else {
+          this.error = res.errores.join(' · ');
+        }
+      },
+      error: err => (this.error = textoError(err, 'No se pudo validar la sesión')),
+    });
+  }
+
+  guardar(): void {
+    if (!this.datosValidos()) return;
+    const payload = this.conDocente(this.form);
+    const peticion = this.editandoId != null
+      ? this.service.mover(this.editandoId, payload)
+      : this.service.asignar(payload);
+
+    peticion.subscribe({
+      next: (res: any) => {
+        this.cancelar();
+        this.mensaje = this.exito(res, 'Guardado correctamente');
+        this.aplicar(res);
+      },
+      error: err => (this.error = textoError(err, 'No se pudo guardar la sesión')),
+    });
+  }
+
+  editar(s: Sesion): void {
+    if (!this.puedeEditar) return;
+    this.form = { ...s, horaInicio: this.hhmm(s.horaInicio), horaFin: this.hhmm(s.horaFin) };
+    this.editandoId = s.id ?? null;
+    this.limpiar();
+  }
+
+  eliminar(s: Sesion): void {
+    if (s.id == null || !confirm('¿Eliminar esta sesión?')) return;
+    this.service.eliminar(s.id).subscribe({
+      next: () => {
+        this.cancelar();
+        this.sesiones = this.sesiones.filter(x => x.id !== s.id);
+        this.reconstruir();
+      },
+      error: err => (this.error = textoError(err, 'No se pudo eliminar')),
+    });
+  }
+
+  cancelar(): void {
+    this.form = this.vacio();
+    this.editandoId = null;
+  }
+
+  // ---------- drag and drop ----------
+
   iniciarArrastre(ev: DragEvent, s: Sesion): void {
     if (!this.puedeEditar) return;
     this.arrastrando = s;
+    this.arrastrandoGrupo = null;
     ev.dataTransfer!.effectAllowed = 'move';
     ev.dataTransfer!.setData('text/plain', String(s.id));
   }
 
+  iniciarArrastreGrupo(ev: DragEvent, g: Grupo): void {
+    if (!this.puedeEditar) return;
+    this.arrastrandoGrupo = g;
+    this.arrastrando = null;
+    ev.dataTransfer!.effectAllowed = 'copy';
+    ev.dataTransfer!.setData('text/plain', `grupo-${g.id}`);
+  }
+
   finArrastre(): void {
     this.arrastrando = null;
+    this.arrastrandoGrupo = null;
     this.celdaHover = '';
   }
 
   sobreCelda(ev: DragEvent, dia: string, hora: string): void {
-    if (!this.arrastrando) return;
+    if (!this.arrastrando && !this.arrastrandoGrupo) return;
     ev.preventDefault(); // necesario para permitir el drop
-    ev.dataTransfer!.dropEffect = 'move';
-    this.celdaHover = dia + hora;
+    ev.dataTransfer!.dropEffect = this.arrastrandoGrupo ? 'copy' : 'move';
+    const clave = dia + hora;
+    if (this.celdaHover !== clave) this.celdaHover = clave;
   }
 
   soltar(ev: DragEvent, dia: string, hora: string): void {
     ev.preventDefault();
-    const s = this.arrastrando;
+    const sesion = this.arrastrando;
+    const grupo = this.arrastrandoGrupo;
     this.finArrastre();
-    if (!s || s.id == null) return;
 
+    if (grupo) {
+      this.crearDesdeGrupo(grupo, dia, hora);
+    } else if (sesion) {
+      this.moverSesion(sesion, dia, hora);
+    }
+  }
+
+  private moverSesion(s: Sesion, dia: string, hora: string): void {
+    if (s.id == null) return;
     if (s.diaSemana === dia && this.hhmm(s.horaInicio) === hora) return;
 
     const duracion = this.aMin(s.horaFin) - this.aMin(s.horaInicio);
     const fin = this.aMin(hora) + duracion;
+    this.limpiar();
     if (fin > 24 * 60) {
-      this.mensaje = '';
       this.error = 'La sesión no cabe en esa franja';
       return;
     }
@@ -257,14 +353,60 @@ export class Horario implements OnInit {
       horaFin: this.aHora(fin),
     };
 
-    this.mensaje = '';
-    this.error = '';
-    this.service.mover(s.id, nueva).subscribe({
-      next: () => {
-        this.mensaje = 'Sesión movida correctamente';
-        this.cargar();
+    this.service.mover(s.id, this.conDocente(nueva)).subscribe({
+      next: (res: any) => {
+        this.mensaje = this.exito(res, 'Sesión movida correctamente');
+        this.aplicar(res);
       },
-      error: err => (this.error = this.textoError(err, 'No se pudo mover la sesión')),
+      error: err => (this.error = textoError(err, 'No se pudo mover la sesión')),
     });
+  }
+
+  private crearDesdeGrupo(g: Grupo, dia: string, hora: string): void {
+    this.limpiar();
+    const fin = this.aMin(hora) + this.duracionHoras * 60;
+    if (fin > 24 * 60) {
+      this.error = 'La sesión no cabe en esa franja';
+      return;
+    }
+    const horaFin = this.aHora(fin);
+    const aulaId = this.aulaElegida || this.sugerirAula(g, dia, hora, horaFin);
+    if (!aulaId) {
+      this.error = 'No hay un aula libre y compatible en ese horario. Elige un aula manualmente.';
+      return;
+    }
+
+    const nueva: Sesion = {
+      grupoId: g.id!,
+      docenteId: g.docenteId ?? 0,
+      aulaId,
+      diaSemana: dia as Sesion['diaSemana'],
+      horaInicio: hora,
+      horaFin,
+    };
+
+    this.service.asignar(nueva).subscribe({
+      next: (res: any) => {
+        this.mensaje = this.exito(res, 'Sesión creada correctamente');
+        this.aplicar(res);
+      },
+      error: err => (this.error = textoError(err, 'No se pudo crear la sesión')),
+    });
+  }
+
+  /** Aula más pequeña que quepa, tenga lo que pide el curso y esté libre en ese bloque. */
+  private sugerirAula(g: Grupo, dia: string, ini: string, fin: string): number {
+    const curso = this.cursos.find(c => c.id === g.cursoId);
+    const a0 = this.aMin(ini);
+    const a1 = this.aMin(fin);
+    const candidatas = this.aulas
+      .filter(a => (a.capacidad ?? 0) >= (g.estudiantesProyectados ?? 0))
+      .filter(a => !curso?.requiereComputadores || a.tieneComputadores)
+      .filter(a => !curso?.requiereSillasMoviles || a.sillasMoviles)
+      .filter(a => !this.sesiones.some(s =>
+        s.aulaId === a.id && s.diaSemana === dia
+        && this.aMin(s.horaInicio) < a1 && this.aMin(s.horaFin) > a0))
+      .sort((x, y) => (x.capacidad ?? 0) - (y.capacidad ?? 0));
+    return candidatas[0]?.id ?? 0;
   }
 }

@@ -8,7 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.proyectonucleo.dto.SesionDTO;
 import co.edu.unbosque.proyectonucleo.dto.ValidacionDTO;
+import co.edu.unbosque.proyectonucleo.entity.Grupo;
 import co.edu.unbosque.proyectonucleo.entity.Sesion;
+import co.edu.unbosque.proyectonucleo.entity.Docente;
+
 import co.edu.unbosque.proyectonucleo.exception.AulaNoEncontradaException;
 import co.edu.unbosque.proyectonucleo.exception.DatosObligatoriosException;
 import co.edu.unbosque.proyectonucleo.exception.DocenteNoEncontradoException;
@@ -93,24 +96,28 @@ public class HorarioService {
 	private Sesion construir(SesionDTO dto) {
 		validarCampos(dto);
 		Sesion s = new Sesion();
-		s.setGrupo(grupoRepo.findById(dto.getGrupoId()).orElseThrow(GrupoNoEncontradoException::new));
-		s.setDocente(docenteRepo.findById(dto.getDocenteId()).orElseThrow(DocenteNoEncontradoException::new));
+		Grupo g = grupoRepo.findById(dto.getGrupoId()).orElseThrow(GrupoNoEncontradoException::new);
+		s.setGrupo(g);
+		s.setDocente(docenteDe(g, dto));
 		s.setAula(aulaRepo.findById(dto.getAulaId()).orElseThrow(AulaNoEncontradaException::new));
 		s.setDiaSemana(dto.getDiaSemana());
 		s.setHoraInicio(dto.getHoraInicio());
 		s.setHoraFin(dto.getHoraFin());
 		return s;
 	}
-
 	private void validarId(Long id) {
 		if (id == null || id <= 0) throw new IdInvalidoException();
 	}
+	
+	private Docente docenteDe(Grupo g, SesionDTO dto) {
+		if (g.getDocente() != null) return g.getDocente();
+		validarId(dto.getDocenteId());
+		return docenteRepo.findById(dto.getDocenteId()).orElseThrow(DocenteNoEncontradoException::new);
+	}
 
-	/** Solo revisa que no falte nada: los choques y reglas los valida ValidacionService. */
 	private void validarCampos(SesionDTO dto) {
 		if (dto == null) throw new DatosObligatoriosException();
 		validarId(dto.getGrupoId());
-		validarId(dto.getDocenteId());
 		validarId(dto.getAulaId());
 		if (dto.getDiaSemana() == null) throw new DatosObligatoriosException("diaSemana");
 		if (dto.getHoraInicio() == null) throw new DatosObligatoriosException("horaInicio");
@@ -155,5 +162,10 @@ public class HorarioService {
 		public SesionDTO getSesion() { return sesion; }
 		public List<String> getErrores() { return errores; }
 		public List<String> getAdvertencias() { return advertencias; }
+	}
+	@Transactional(readOnly = true)
+	public List<SesionDTO> listarDeDocente(Long docenteId) {
+		if (docenteId == null) return List.of();
+		return sesionRepo.findByDocente_Id(docenteId).stream().map(this::aDTO).toList();
 	}
 }

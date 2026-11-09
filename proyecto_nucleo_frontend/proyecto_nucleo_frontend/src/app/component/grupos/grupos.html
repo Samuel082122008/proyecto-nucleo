@@ -2,10 +2,17 @@
   <h2>Grupos</h2>
 
   <form class="form" (ngSubmit)="guardar()">
-    <select name="cursoId" [(ngModel)]="form.cursoId">
+    <select name="cursoId" [ngModel]="form.cursoId" (ngModelChange)="elegirCurso($event)">
       <option [ngValue]="0">-- Curso --</option>
       @for (c of cursos; track c.id) {
         <option [ngValue]="c.id">{{ c.nombre }}</option>
+      }
+    </select>
+
+    <select name="docenteId" [(ngModel)]="form.docenteId" [disabled]="!form.cursoId">
+      <option [ngValue]="0">-- Docente habilitado --</option>
+      @for (d of docentesDelCurso; track d.id) {
+        <option [ngValue]="d.id">{{ d.nombre }}</option>
       }
     </select>
 
@@ -15,27 +22,32 @@
     <button type="submit">Crear</button>
   </form>
 
+  @if (form.cursoId && docentesDelCurso.length === 0) {
+    <p class="error">Este curso no tiene docentes habilitados. Habilita uno en la pantalla Habilitaciones.</p>
+  }
   @if (error) { <p class="error">{{ error }}</p> }
 
   <table>
     <thead>
-    <tr><th>ID</th><th>Curso</th><th>Estudiantes</th><th>Estado</th><th>Acciones</th></tr>
+    <tr><th>ID</th><th>Curso</th><th>Docente</th><th>Estudiantes</th><th>Estado</th><th>Acciones</th></tr>
     </thead>
     <tbody>
       @for (g of grupos; track g.id) {
         <tr>
           <td>{{ g.id }}</td>
           <td>{{ nombreCurso(g.cursoId) }}</td>
+          <td>{{ nombreDocente(g.docenteId) }}</td>
           <td>{{ g.estudiantesProyectados }}</td>
           <td>{{ g.estado }}</td>
           <td>
             @if (g.estado !== 'CERRADO') {
-              <button class="peligro" (click)="cerrar(g)">Cerrar</button>
+              <button class="secundario" (click)="cerrar(g)">Cerrar</button>
             }
+            <button class="peligro" (click)="eliminar(g)">Eliminar</button>
           </td>
         </tr>
       } @empty {
-        <tr><td colspan="5">No hay grupos registrados</td></tr>
+        <tr><td colspan="6">No hay grupos registrados</td></tr>
       }
     </tbody>
   </table>

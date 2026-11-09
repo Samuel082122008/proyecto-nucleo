@@ -9,6 +9,8 @@ public class CursoDTO {
 	private int sesionesPorSemana;
 	private boolean requiereComputadores;
 	private boolean requiereSillasMoviles;
+	private Integer semestre;
+
 
 	public CursoDTO() {
 	}
@@ -21,7 +23,9 @@ public class CursoDTO {
 		this.requiereComputadores = requiereComputadores;
 		this.requiereSillasMoviles = requiereSillasMoviles;
 	}
-
+	public Integer getSemestre() { return semestre; }
+	public void setSemestre(Integer semestre) { this.semestre = semestre; }
+	
 	public Long getId() { return id; }
 	public void setId(Long id) { this.id = id; }
 

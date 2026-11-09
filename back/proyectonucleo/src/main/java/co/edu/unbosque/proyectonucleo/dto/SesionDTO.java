@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 public class SesionDTO {
 	private Long id;
 	@NotNull private Long grupoId;
-	@NotNull private Long docenteId;
+	private Long docenteId;
 	@NotNull private Long aulaId;
 	@NotNull private DiaSemana diaSemana;
 	@NotNull private LocalTime horaInicio;
@@ -19,7 +19,7 @@ public class SesionDTO {
 		
 	}
 
-	public SesionDTO(@NotNull Long grupoId, @NotNull Long docenteId, @NotNull Long aulaId,
+	public SesionDTO(@NotNull Long grupoId, Long docenteId, @NotNull Long aulaId,
 			@NotNull DiaSemana diaSemana, @NotNull LocalTime horaInicio, @NotNull LocalTime horaFin) {
 		super();
 		this.grupoId = grupoId;

@@ -17,6 +17,7 @@ import co.edu.unbosque.proyectonucleo.exception.EscalafonInvalidoException;
 import co.edu.unbosque.proyectonucleo.exception.IdInvalidoException;
 import co.edu.unbosque.proyectonucleo.exception.NombreDocenteInvalidoException;
 import co.edu.unbosque.proyectonucleo.repository.DocenteRepository;
+import co.edu.unbosque.proyectonucleo.repository.GrupoRepository;
 import co.edu.unbosque.proyectonucleo.repository.HabilitacionRepository;
 import co.edu.unbosque.proyectonucleo.repository.RestriccionHorariaRepository;
 import co.edu.unbosque.proyectonucleo.repository.SesionRepository;
@@ -45,6 +46,9 @@ public class DocenteService {
 
 	@Autowired
 	private ModelMapper modelMapper;
+	
+	@Autowired
+	private GrupoRepository grupoRepo;
 
 	public DocenteDTO crear(DocenteDTO dto) {
 		validar(dto);
@@ -77,7 +81,7 @@ public class DocenteService {
 	public int eliminar(Long id) {
 		validarId(id);
 		if (!docenteRepo.existsById(id)) throw new DocenteNoEncontradoException();
-		if (sesionRepo.existsByDocente_Id(id) || habilitacionRepo.existsByDocente_Id(id)
+		if (sesionRepo.existsByDocente_Id(id) || grupoRepo.existsByDocente_Id(id) || habilitacionRepo.existsByDocente_Id(id)
 				|| restriccionRepo.existsByDocente_Id(id) || usuarioRepo.existsByDocenteId(id)) {
 			throw new DocenteEnUsoException();
 		}

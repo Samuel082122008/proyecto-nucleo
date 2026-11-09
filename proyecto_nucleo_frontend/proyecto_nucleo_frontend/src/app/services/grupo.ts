@@ -21,4 +21,7 @@ export class GrupoService {
   cerrar(id: number): Observable<Grupo> {
     return this.http.patch<Grupo>(`${this.url}/${id}/cerrar`, {});
   }
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
+  }
 }

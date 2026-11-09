@@ -2,6 +2,33 @@
   <h2>Horario semanal</h2>
 
   @if (puedeEditar) {
+    <section class="panel-grupos">
+      <div class="panel-cab">
+        <h3>Grupos por programar</h3>
+        <label>Aula para sesiones nuevas
+          <select [(ngModel)]="aulaElegida">
+            <option [ngValue]="0">Automática (la que mejor encaje)</option>
+            @for (a of aulas; track a.id) {
+              <option [ngValue]="a.id">{{ a.nombre }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <div class="chips">
+        @for (p of pendientes; track p.grupo.id) {
+          <div class="chip" draggable="true"
+               (dragstart)="iniciarArrastreGrupo($event, p.grupo)"
+               (dragend)="finArrastre()">
+            <strong>{{ nombreGrupo(p.grupo.id!) }}</strong>
+            <span>{{ docenteDelGrupo(p.grupo.id) }}</span>
+            <small>{{ p.faltan }} sesión(es) por programar</small>
+          </div>
+        } @empty {
+          <p class="vacio">No hay grupos abiertos con sesiones pendientes.</p>
+        }
+      </div>
+    </section>
+
     <form class="form" (ngSubmit)="guardar()">
       <select name="grupoId" [(ngModel)]="form.grupoId">
         <option [ngValue]="0">-- Grupo --</option>
@@ -10,12 +37,7 @@
         }
       </select>
 
-      <select name="docenteId" [(ngModel)]="form.docenteId">
-        <option [ngValue]="0">-- Docente --</option>
-        @for (d of docentes; track d.id) {
-          <option [ngValue]="d.id">{{ d.nombre }}</option>
-        }
-      </select>
+      <span class="docente-auto">Docente: {{ docenteDelGrupo(form.grupoId) }}</span>
 
       <select name="aulaId" [(ngModel)]="form.aulaId">
         <option [ngValue]="0">-- Aula --</option>
@@ -88,6 +110,6 @@
   </div>
 
   @if (puedeEditar) {
-    <p class="ayuda">Arrastra una sesión a otra celda para moverla, o haz clic para editarla.</p>
+    <p class="ayuda">Arrastra un grupo de arriba a la grilla para programarlo, o mueve una sesión a otra celda. Haz clic en una sesión para editarla.</p>
   }
 </div>
