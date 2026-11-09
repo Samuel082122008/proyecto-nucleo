@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -33,6 +33,7 @@ import { Parametros } from './component/parametros/parametros';
     ReactiveFormsModule,
   ],
   providers: [
+    provideZoneChangeDetection(),
     provideHttpClient(withInterceptors([authInterceptor])),
   ],
   bootstrap: [App],

@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,48 +20,72 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+	// ---------------------------------------------------------------
+	// Constantes
+	// ---------------------------------------------------------------
+
+	private static final String ROLE_DIRECTOR = "ROLE_DIRECTOR";
+	private static final String ROLE_COORDINADOR = "ROLE_COORDINADOR";
+
+	/** Recursos de lectura abierta (autenticados) y escritura restringida. */
+	private static final String[] RECURSOS = { "/sesiones", "/sesiones/**", "/grupos", "/grupos/**", "/cursos",
+			"/cursos/**", "/docentes", "/docentes/**", "/aulas", "/aulas/**", "/parametros", "/parametros/**",
+			"/habilitaciones", "/habilitaciones/**" };
+
+	// ---------------------------------------------------------------
+	// Dependencias y configuracion
+	// ---------------------------------------------------------------
+
 	private final JwtAuthenticationFilter jwtAuthFilter;
 	private final List<String> allowedOrigins;
-	private static final String[] RECURSOS = {
-			"/sesiones", "/sesiones/**", "/grupos", "/grupos/**", "/cursos", "/cursos/**",
-			"/docentes", "/docentes/**", "/aulas", "/aulas/**", "/parametros", "/parametros/**",
-			"/habilitaciones", "/habilitaciones/**" };
 
 	public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
 			@Value("${app.frontend.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:4200}") String allowedOriginsRaw) {
+
 		this.jwtAuthFilter = jwtAuthFilter;
 		this.allowedOrigins = Arrays.stream(allowedOriginsRaw.split(",")).map(String::trim).filter(o -> !o.isBlank())
 				.toList();
 	}
 
+	// ---------------------------------------------------------------
+	// Beans
+	// ---------------------------------------------------------------
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.cors(Customizer.withDefaults()).csrf(csrf -> csrf.disable())
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
 				// Sin token -> 401 (en vez de 403)
 				.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+
 				.authorizeHttpRequests(auth -> auth
+
+						// Publicas
 						.requestMatchers("/auth/**").permitAll()
 						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
 
 						// Usuarios: solo el DIRECTOR (igual que en las rutas del frontend)
-						.requestMatchers("/usuarios", "/usuarios/**").hasAuthority("ROLE_DIRECTOR")
-						.requestMatchers("/admin/**").hasAnyAuthority("ROLE_DIRECTOR", "ROLE_COORDINADOR")
+						.requestMatchers("/usuarios", "/usuarios/**").hasAuthority(ROLE_DIRECTOR)
+
+						// Administracion: director o coordinador
+						.requestMatchers("/admin/**").hasAnyAuthority(ROLE_DIRECTOR, ROLE_COORDINADOR)
 
 						// El docente gestiona sus restricciones horarias
 						.requestMatchers("/restricciones", "/restricciones/**").authenticated()
 
 						// Leer: cualquier usuario autenticado. Escribir: director o coordinador
-						.requestMatchers(HttpMethod.GET, RECURSOS).authenticated()
-						.requestMatchers(RECURSOS).hasAnyAuthority("ROLE_DIRECTOR", "ROLE_COORDINADOR")
+						.requestMatchers(HttpMethod.GET, RECURSOS).authenticated().requestMatchers(RECURSOS)
+						.hasAnyAuthority(ROLE_DIRECTOR, ROLE_COORDINADOR)
 
+						// Todo lo demas requiere autenticacion
 						.anyRequest().authenticated())
+
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
