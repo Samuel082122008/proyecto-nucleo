@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -26,6 +27,10 @@ public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthFilter;
 	private final List<String> allowedOrigins;
+	private static final String[] RECURSOS = {
+			"/sesiones", "/sesiones/**", "/grupos", "/grupos/**", "/cursos", "/cursos/**",
+			"/docentes", "/docentes/**", "/aulas", "/aulas/**", "/parametros", "/parametros/**",
+			"/habilitaciones", "/habilitaciones/**" };
 
 	public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
 			@Value("${app.frontend.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:4200}") String allowedOriginsRaw) {
@@ -41,15 +46,20 @@ public class SecurityConfig {
 				// Sin token -> 401 (en vez de 403)
 				.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 				.authorizeHttpRequests(auth -> auth
-						// Publicos
 						.requestMatchers("/auth/**").permitAll()
 						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
 
-						// Solo ADMIN gestiona usuarios
-						.requestMatchers("/usuarios", "/usuarios/**").hasAnyAuthority("ROLE_DIRECTOR", "ROLE_COORDINADOR")
+						// Usuarios: solo el DIRECTOR (igual que en las rutas del frontend)
+						.requestMatchers("/usuarios", "/usuarios/**").hasAuthority("ROLE_DIRECTOR")
 						.requestMatchers("/admin/**").hasAnyAuthority("ROLE_DIRECTOR", "ROLE_COORDINADOR")
 
-						// TODO: afinar permisos por rol (DOCENTE, etc.) en los demas endpoints
+						// El docente gestiona sus restricciones horarias
+						.requestMatchers("/restricciones", "/restricciones/**").authenticated()
+
+						// Leer: cualquier usuario autenticado. Escribir: director o coordinador
+						.requestMatchers(HttpMethod.GET, RECURSOS).authenticated()
+						.requestMatchers(RECURSOS).hasAnyAuthority("ROLE_DIRECTOR", "ROLE_COORDINADOR")
+
 						.anyRequest().authenticated())
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

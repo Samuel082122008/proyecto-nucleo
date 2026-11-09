@@ -3,6 +3,14 @@
 
   <form class="form" (ngSubmit)="guardar()">
     <input name="nombre" placeholder="Nombre" [(ngModel)]="form.nombre" />
+
+    <select name="semestre" [(ngModel)]="form.semestre">
+      <option [ngValue]="null">-- Semestre --</option>
+      @for (n of semestres; track n) {
+        <option [ngValue]="n">Semestre {{ n }}</option>
+      }
+    </select>
+
     <input name="sesiones" type="number" min="1" placeholder="Sesiones/semana"
            [(ngModel)]="form.sesionesPorSemana" />
 
@@ -23,18 +31,29 @@
 
   @if (error) { <p class="error">{{ error }}</p> }
 
+  <div class="form">
+    <select [(ngModel)]="filtroSemestre" name="filtroSemestre">
+      <option [ngValue]="0">Todos los semestres</option>
+      <option [ngValue]="-1">Sin semestre</option>
+      @for (n of semestres; track n) {
+        <option [ngValue]="n">Semestre {{ n }}</option>
+      }
+    </select>
+  </div>
+
   <table>
     <thead>
     <tr>
-      <th>ID</th><th>Nombre</th><th>Sesiones/sem</th>
+      <th>ID</th><th>Nombre</th><th>Semestre</th><th>Sesiones/sem</th>
       <th>Computadores</th><th>Sillas móviles</th><th>Acciones</th>
     </tr>
     </thead>
     <tbody>
-      @for (c of cursos; track c.id) {
+      @for (c of cursosVisibles; track c.id) {
         <tr>
           <td>{{ c.id }}</td>
           <td>{{ c.nombre }}</td>
+          <td>{{ c.semestre ?? '—' }}</td>
           <td>{{ c.sesionesPorSemana }}</td>
           <td>{{ c.requiereComputadores ? 'Sí' : 'No' }}</td>
           <td>{{ c.requiereSillasMoviles ? 'Sí' : 'No' }}</td>
@@ -44,7 +63,7 @@
           </td>
         </tr>
       } @empty {
-        <tr><td colspan="6">No hay cursos registrados</td></tr>
+        <tr><td colspan="7">No hay cursos para este filtro</td></tr>
       }
     </tbody>
   </table>

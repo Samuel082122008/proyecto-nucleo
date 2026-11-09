@@ -8,16 +8,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.proyectonucleo.dto.GrupoDTO;
 import co.edu.unbosque.proyectonucleo.entity.Curso;
+import co.edu.unbosque.proyectonucleo.entity.Docente;
 import co.edu.unbosque.proyectonucleo.entity.EstadoGrupo;
 import co.edu.unbosque.proyectonucleo.entity.Grupo;
 import co.edu.unbosque.proyectonucleo.exception.CursoNoEncontradoException;
 import co.edu.unbosque.proyectonucleo.exception.DatosObligatoriosException;
+import co.edu.unbosque.proyectonucleo.exception.DocenteNoEncontradoException;
 import co.edu.unbosque.proyectonucleo.exception.EstudiantesProyectadosInvalidosException;
 import co.edu.unbosque.proyectonucleo.exception.GrupoNoEncontradoException;
 import co.edu.unbosque.proyectonucleo.exception.IdInvalidoException;
 import co.edu.unbosque.proyectonucleo.exception.ReglaNegocioException;
 import co.edu.unbosque.proyectonucleo.repository.CursoRepository;
+import co.edu.unbosque.proyectonucleo.repository.DocenteRepository;
 import co.edu.unbosque.proyectonucleo.repository.GrupoRepository;
+import co.edu.unbosque.proyectonucleo.repository.HabilitacionRepository;
+import co.edu.unbosque.proyectonucleo.repository.SesionRepository;
 
 @Service
 @Transactional
@@ -30,20 +35,37 @@ public class GrupoService {
 	private CursoRepository cursoRepo;
 
 	@Autowired
+	private DocenteRepository docenteRepo;
+
+	@Autowired
+	private HabilitacionRepository habilitacionRepo;
+
+	@Autowired
+	private SesionRepository sesionRepo;
+
+	@Autowired
 	private ValidacionService validacionService;
 
 	public GrupoDTO crear(GrupoDTO dto) {
 		if (dto == null) throw new DatosObligatoriosException();
 		validarId(dto.getCursoId());
+		if (dto.getDocenteId() == null) throw new DatosObligatoriosException("docenteId");
+		validarId(dto.getDocenteId());
 		if (dto.getEstudiantesProyectados() < 0) throw new EstudiantesProyectadosInvalidosException();
 
 		Curso curso = cursoRepo.findById(dto.getCursoId()).orElseThrow(CursoNoEncontradoException::new);
+		Docente docente = docenteRepo.findById(dto.getDocenteId()).orElseThrow(DocenteNoEncontradoException::new);
+
+		if (!habilitacionRepo.existsByDocente_IdAndCurso_Id(docente.getId(), curso.getId())) {
+			throw new ReglaNegocioException(List.of("El docente no esta habilitado para dictar este curso."));
+		}
 
 		ResultadoValidacion r = validacionService.validarCupo(dto.getEstudiantesProyectados());
 		if (!r.esValido()) throw new ReglaNegocioException(r.getErrores());
 
 		Grupo g = new Grupo();
 		g.setCurso(curso);
+		g.setDocente(docente);
 		g.setEstudiantesProyectados(dto.getEstudiantesProyectados());
 		g.setEstado(EstadoGrupo.ABIERTO);
 		return aDTO(grupoRepo.save(g));
@@ -54,6 +76,16 @@ public class GrupoService {
 		Grupo g = grupoRepo.findById(id).orElseThrow(GrupoNoEncontradoException::new);
 		g.setEstado(EstadoGrupo.CERRADO);
 		return aDTO(g);
+	}
+
+	public int eliminar(Long id) {
+		validarId(id);
+		if (!grupoRepo.existsById(id)) throw new GrupoNoEncontradoException();
+		if (!sesionRepo.findByGrupo_Id(id).isEmpty()) {
+			throw new ReglaNegocioException(List.of("El grupo tiene sesiones en el horario; eliminalas primero."));
+		}
+		grupoRepo.deleteById(id);
+		return 0;
 	}
 
 	@Transactional(readOnly = true)
@@ -69,6 +101,7 @@ public class GrupoService {
 		GrupoDTO dto = new GrupoDTO();
 		dto.setId(g.getId());
 		dto.setCursoId(g.getCurso().getId());
+		dto.setDocenteId(g.getDocente() == null ? null : g.getDocente().getId());
 		dto.setEstudiantesProyectados(g.getEstudiantesProyectados());
 		dto.setEstado(g.getEstado());
 		return dto;

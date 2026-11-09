@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.unbosque.proyectonucleo.dto.RestriccionHorariaDTO;
 import co.edu.unbosque.proyectonucleo.service.RestriccionHorariaService;
 import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import co.edu.unbosque.proyectonucleo.security.UsuarioAutenticado;
 
 @RestController
 @RequestMapping("/restricciones")
@@ -23,20 +26,38 @@ public class RestriccionHorariaController {
 	@Autowired
 	private RestriccionHorariaService restriccionService;
 
-	/** GET /restricciones  o  GET /restricciones?docenteId=3 */
+	/** GET /restricciones  o  GET /restricciones?docenteId=3 (el docente solo ve las suyas) */
 	@GetMapping
-	public ResponseEntity<?> listar(@RequestParam(required = false) Long docenteId) {
+	public ResponseEntity<?> listar(@RequestParam(required = false) Long docenteId,
+			@AuthenticationPrincipal UsuarioAutenticado u) {
+		if (esDocente(u)) {
+			if (u.docenteId() == null) return ResponseEntity.ok(List.of());
+			return ResponseEntity.ok(restriccionService.listar(u.docenteId()));
+		}
 		return ResponseEntity.ok(restriccionService.listar(docenteId));
 	}
 
 	@PostMapping
-	public ResponseEntity<?> crear(@Valid @RequestBody RestriccionHorariaDTO dto) {
+	public ResponseEntity<?> crear(@Valid @RequestBody RestriccionHorariaDTO dto,
+			@AuthenticationPrincipal UsuarioAutenticado u) {
+		if (esDocente(u)) {
+			if (u.docenteId() == null) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+			dto.setDocenteId(u.docenteId()); // ignora el docenteId que mande el cliente
+		}
 		return new ResponseEntity<>(restriccionService.crear(dto), HttpStatus.CREATED);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> eliminar(@PathVariable Long id) {
-		restriccionService.eliminar(id);
+	public ResponseEntity<?> eliminar(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado u) {
+		if (esDocente(u)) {
+			restriccionService.eliminarDeDocente(id, u.docenteId());
+		} else {
+			restriccionService.eliminar(id);
+		}
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+
+	private boolean esDocente(UsuarioAutenticado u) {
+		return u != null && "DOCENTE".equals(u.rol());
 	}
 }

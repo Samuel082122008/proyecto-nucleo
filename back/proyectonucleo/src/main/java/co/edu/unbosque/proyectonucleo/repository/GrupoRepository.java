@@ -7,5 +7,6 @@ import co.edu.unbosque.proyectonucleo.entity.Grupo;
 public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 
 	boolean existsByCurso_Id(Long cursoId);
+	boolean existsByDocente_Id(Long docenteId);
 
 }

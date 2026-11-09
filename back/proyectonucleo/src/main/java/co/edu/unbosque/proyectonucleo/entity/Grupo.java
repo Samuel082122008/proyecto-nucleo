@@ -32,6 +32,13 @@ public class Grupo {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private EstadoGrupo estado;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "id_docente")
+	private Docente docente;
+
+	public Docente getDocente() { return docente; }
+	public void setDocente(Docente docente) { this.docente = docente; }
 
 	public Grupo() {
 	}

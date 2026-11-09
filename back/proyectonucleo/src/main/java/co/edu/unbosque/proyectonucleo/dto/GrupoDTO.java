@@ -11,6 +11,8 @@ public class GrupoDTO {
 	@NotNull private Long cursoId;
 	@Min(0) private int estudiantesProyectados;
 	private EstadoGrupo estado;
+	private Long docenteId;
+	
 	
 	public GrupoDTO() {
 		
@@ -22,6 +24,9 @@ public class GrupoDTO {
 		this.estudiantesProyectados = estudiantesProyectados;
 		this.estado = estado;
 	}
+	
+	public Long getDocenteId() { return docenteId; }
+	public void setDocenteId(Long docenteId) { this.docenteId = docenteId; }
 
 	public Long getId() {
 		return id;

@@ -18,11 +18,27 @@
     }
   </form>
 
+  @if (docenteUsuario) {
+    <form class="form" (ngSubmit)="crearUsuario()">
+      <strong>Usuario para {{ docenteUsuario.nombre }}:</strong>
+      <input name="username" placeholder="Usuario" autocomplete="off" [(ngModel)]="nuevoUsuario.username" />
+      <input name="password" type="password" placeholder="Contraseña (mín. 6)" autocomplete="new-password"
+             [(ngModel)]="nuevoUsuario.password" />
+      <button type="submit">Crear usuario</button>
+      <button type="button" class="secundario" (click)="cancelarUsuario()">Cancelar</button>
+    </form>
+  }
+
+  @if (mensaje) { <p class="ok">{{ mensaje }}</p> }
   @if (error) { <p class="error">{{ error }}</p> }
 
   <table>
     <thead>
-    <tr><th>ID</th><th>Nombre</th><th>Vinculación</th><th>Escalafón</th><th>Acciones</th></tr>
+    <tr>
+      <th>ID</th><th>Nombre</th><th>Vinculación</th><th>Escalafón</th>
+      @if (esDirector) { <th>Usuario</th> }
+      <th>Acciones</th>
+    </tr>
     </thead>
     <tbody>
       @for (d of docentes; track d.id) {
@@ -31,13 +47,23 @@
           <td>{{ d.nombre }}</td>
           <td>{{ d.tipoVinculacion }}</td>
           <td>{{ d.escalafon }}</td>
+          @if (esDirector) {
+            <td>
+              @if (usuarioDe(d); as u) {
+                {{ u.username }}
+                <button class="secundario" (click)="quitarUsuario(d)">Quitar usuario</button>
+              } @else {
+                <button (click)="abrirUsuario(d)">Crear usuario</button>
+              }
+            </td>
+          }
           <td>
             <button (click)="editar(d)">Editar</button>
             <button class="peligro" (click)="eliminar(d)">Eliminar</button>
           </td>
         </tr>
       } @empty {
-        <tr><td colspan="5">No hay docentes registrados</td></tr>
+        <tr><td [attr.colspan]="esDirector ? 6 : 5">No hay docentes registrados</td></tr>
       }
     </tbody>
   </table>

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -26,18 +27,19 @@ public class JwtUtil {
 	private SecretKey clave() {
 		return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 	}
-
-	public String generarToken(String username, String rol) {
-		Date ahora = new Date();
-		return Jwts.builder()
-				.subject(username)
-				.claim("rol", rol)
-				.issuedAt(ahora)
-				.expiration(new Date(ahora.getTime() + expiracionMs))
-				.signWith(clave())
-				.compact();
+	public Claims leer(String token) {
+	    return claims(token);
 	}
-
+	public String generarToken(String username, String rol, Long docenteId) {
+	    Date ahora = new Date();
+	    JwtBuilder b = Jwts.builder()
+	            .subject(username)
+	            .claim("rol", rol)
+	            .issuedAt(ahora)
+	            .expiration(new Date(ahora.getTime() + expiracionMs));
+	    if (docenteId != null) b.claim("docenteId", docenteId);
+	    return b.signWith(clave()).compact();
+	}
 	public String extraerUsername(String token) {
 		return claims(token).getSubject();
 	}
