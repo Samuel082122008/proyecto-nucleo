@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CursoService } from '../../services/curso';
 import { Curso } from '../../models/curso';
+import { textoError } from '../../core/http-error';
 
 @Component({
   selector: 'app-cursos',
@@ -10,6 +11,8 @@ import { Curso } from '../../models/curso';
 })
 export class Cursos implements OnInit {
   cursos: Curso[] = [];
+  semestres = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  filtroSemestre = 0; // 0 = todos, -1 = sin semestre
   form: Curso = this.vacio();
   editando = false;
   error = '';
@@ -26,7 +29,14 @@ export class Cursos implements OnInit {
       sesionesPorSemana: 1,
       requiereComputadores: false,
       requiereSillasMoviles: false,
+      semestre: null,
     };
+  }
+
+  get cursosVisibles(): Curso[] {
+    if (this.filtroSemestre === 0) return this.cursos;
+    if (this.filtroSemestre === -1) return this.cursos.filter(c => c.semestre == null);
+    return this.cursos.filter(c => c.semestre === this.filtroSemestre);
   }
 
   cargar(): void {
@@ -51,7 +61,7 @@ export class Cursos implements OnInit {
         this.cancelar();
         this.cargar();
       },
-      error: () => (this.error = 'No se pudo guardar'),
+      error: err => (this.error = textoError(err, 'No se pudo guardar')),
     });
   }
 
@@ -63,9 +73,10 @@ export class Cursos implements OnInit {
 
   eliminar(c: Curso): void {
     if (c.id == null || !confirm(`¿Eliminar el curso ${c.nombre}?`)) return;
+    this.error = '';
     this.service.eliminar(c.id).subscribe({
       next: () => this.cargar(),
-      error: () => (this.error = 'No se pudo eliminar (puede tener datos asociados)'),
+      error: err => (this.error = textoError(err, 'No se pudo eliminar (puede tener datos asociados)')),
     });
   }
 

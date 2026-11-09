@@ -4,4 +4,5 @@ export interface Curso {
   sesionesPorSemana?: number;
   requiereComputadores?: boolean;
   requiereSillasMoviles?: boolean;
+  semestre?: number | null;
 }

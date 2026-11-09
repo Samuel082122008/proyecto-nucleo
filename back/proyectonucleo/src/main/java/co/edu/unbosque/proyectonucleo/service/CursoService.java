@@ -66,6 +66,7 @@ public class CursoService {
 		c.setSesionesPorSemana(dto.getSesionesPorSemana());
 		c.setRequiereComputadores(dto.isRequiereComputadores());
 		c.setRequiereSillasMoviles(dto.isRequiereSillasMoviles());
+		c.setSemestre(dto.getSemestre());
 		return modelMapper.map(c, CursoDTO.class);
 	}
 
@@ -85,6 +86,9 @@ public class CursoService {
 		if (dto == null) throw new DatosObligatoriosException();
 		if (dto.getNombre() == null || dto.getNombre().isBlank() || dto.getNombre().trim().length() > 100) {
 			throw new NombreInvalidoException();
+		}
+		if (dto.getSemestre() != null && (dto.getSemestre() < 1 || dto.getSemestre() > 10)) {
+			throw new ReglaNegocioException(List.of("El semestre debe estar entre 1 y 10."));
 		}
 	}
 

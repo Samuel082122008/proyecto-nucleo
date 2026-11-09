@@ -46,6 +46,13 @@ export class Horario implements OnInit {
   arrastrandoGrupo: Grupo | null = null;
   celdaHover = '';
 
+  semestres = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  filtroSemestre = 0; // 0 = todos
+  filtroCurso = 0;
+  filtroDocente = 0;
+  filtroAula = 0;
+  visibles = 0;
+
   celdas = new Map<string, Sesion[]>();
   private readonly VACIO: Sesion[] = [];
 
@@ -113,8 +120,9 @@ export class Horario implements OnInit {
   nombreGrupo(id: number): string {
     const g = this.grupos.find(x => x.id === id);
     if (!g) return `Grupo #${id}`;
-    const curso = this.cursos.find(c => c.id === g.cursoId)?.nombre ?? `Curso #${g.cursoId}`;
-    return `${curso} (G${g.id})`;
+    const curso = this.cursos.find(c => c.id === g.cursoId);
+    const sem = curso?.semestre ? `S${curso.semestre} · ` : '';
+    return `${sem}${curso?.nombre ?? `Curso #${g.cursoId}`} (G${g.id})`;
   }
 
   nombreDocente(id: number): string {
@@ -137,7 +145,9 @@ export class Horario implements OnInit {
 
   private reconstruir(): void {
     const mapa = new Map<string, Sesion[]>();
-    for (const s of this.sesiones) {
+    const mostradas = this.sesiones.filter(s => this.pasaFiltro(s));
+    this.visibles = mostradas.length;
+    for (const s of mostradas) {
       const ini = this.hhmm(s.horaInicio);
       const fin = this.hhmm(s.horaFin);
       for (const h of this.horas) {
@@ -180,6 +190,7 @@ export class Horario implements OnInit {
   private calcularPendientes(): void {
     this.pendientes = this.grupos
       .filter(g => g.estado !== 'CERRADO')
+      .filter(g => this.pasaFiltroGrupo(g))
       .map(g => {
         const total = this.cursos.find(c => c.id === g.cursoId)?.sesionesPorSemana ?? 1;
         const hechas = this.sesiones.filter(s => s.grupoId === g.id).length;
@@ -408,5 +419,53 @@ export class Horario implements OnInit {
         && this.aMin(s.horaInicio) < a1 && this.aMin(s.horaFin) > a0))
       .sort((x, y) => (x.capacidad ?? 0) - (y.capacidad ?? 0));
     return candidatas[0]?.id ?? 0;
+  }
+  get cursosDelFiltro(): Curso[] {
+    return this.cursos.filter(c => !this.filtroSemestre || c.semestre === this.filtroSemestre);
+  }
+
+  get hayFiltros(): boolean {
+    return !!(this.filtroSemestre || this.filtroCurso || this.filtroDocente || this.filtroAula);
+  }
+
+  elegirSemestre(n: number): void {
+    this.filtroSemestre = this.filtroSemestre === n ? 0 : n;
+    if (this.filtroCurso && !this.cursosDelFiltro.some(c => c.id === this.filtroCurso)) {
+      this.filtroCurso = 0;
+    }
+    this.reconstruir();
+  }
+
+  aplicarFiltros(): void {
+    this.reconstruir();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroSemestre = this.filtroCurso = this.filtroDocente = this.filtroAula = 0;
+    this.reconstruir();
+  }
+
+  private pasaFiltro(s: Sesion): boolean {
+    const g = this.grupos.find(x => x.id === s.grupoId);
+    const c = this.cursos.find(x => x.id === g?.cursoId);
+    if (this.filtroSemestre && c?.semestre !== this.filtroSemestre) return false;
+    if (this.filtroCurso && g?.cursoId !== this.filtroCurso) return false;
+    if (this.filtroDocente && s.docenteId !== this.filtroDocente) return false;
+    if (this.filtroAula && s.aulaId !== this.filtroAula) return false;
+    return true;
+  }
+
+  private pasaFiltroGrupo(g: Grupo): boolean {
+    const c = this.cursos.find(x => x.id === g.cursoId);
+    if (this.filtroSemestre && c?.semestre !== this.filtroSemestre) return false;
+    if (this.filtroCurso && g.cursoId !== this.filtroCurso) return false;
+    if (this.filtroDocente && g.docenteId !== this.filtroDocente) return false;
+    return true;
+  }
+
+  colorSemestre(grupoId: number): string {
+    const g = this.grupos.find(x => x.id === grupoId);
+    const sem = this.cursos.find(c => c.id === g?.cursoId)?.semestre;
+    return sem ? `hsl(${(sem * 36) % 360} 55% 45%)` : '';
   }
 }

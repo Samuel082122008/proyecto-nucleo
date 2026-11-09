@@ -1,6 +1,47 @@
 <div class="page">
   <h2>Horario semanal</h2>
+  @if (puedeEditar) {
+    <section class="filtros">
+      <div class="pildoras">
+        <button type="button" class="pildora" [class.activa]="!filtroSemestre" (click)="elegirSemestre(filtroSemestre)">
+          Todos
+        </button>
+        @for (n of semestres; track n) {
+          <button type="button" class="pildora" [class.activa]="filtroSemestre === n" (click)="elegirSemestre(n)">
+            Semestre {{ n }}
+          </button>
+        }
+      </div>
 
+      <div class="selectores">
+        <select [ngModel]="filtroCurso" (ngModelChange)="filtroCurso = $event; aplicarFiltros()">
+          <option [ngValue]="0">Todas las materias</option>
+          @for (c of cursosDelFiltro; track c.id) {
+            <option [ngValue]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+
+        <select [ngModel]="filtroDocente" (ngModelChange)="filtroDocente = $event; aplicarFiltros()">
+          <option [ngValue]="0">Todos los docentes</option>
+          @for (d of docentes; track d.id) {
+            <option [ngValue]="d.id">{{ d.nombre }}</option>
+          }
+        </select>
+
+        <select [ngModel]="filtroAula" (ngModelChange)="filtroAula = $event; aplicarFiltros()">
+          <option [ngValue]="0">Todas las aulas</option>
+          @for (a of aulas; track a.id) {
+            <option [ngValue]="a.id">{{ a.nombre }}</option>
+          }
+        </select>
+
+        @if (hayFiltros) {
+          <button type="button" class="secundario" (click)="limpiarFiltros()">Limpiar filtros</button>
+        }
+        <span class="contador">Mostrando {{ visibles }} de {{ sesiones.length }} sesiones</span>
+      </div>
+    </section>
+  }
   @if (puedeEditar) {
     <section class="panel-grupos">
       <div class="panel-cab">
@@ -86,6 +127,7 @@
                 (drop)="soltar($event, d, h)">
                 @for (s of sesionesEn(d, h); track s.id) {
                   <div class="sesion" [class.editable]="puedeEditar"
+                       [style.border-left-color]="colorSemestre(s.grupoId) || null"
                        [class.arrastrando]="arrastrando?.id === s.id"
                        [draggable]="puedeEditar"
                        (dragstart)="iniciarArrastre($event, s)"
